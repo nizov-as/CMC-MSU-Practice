@@ -27,7 +27,8 @@ int main (int argc, char *argv[])
 {
     int flag_i = 0;     // флаг на наличие аргумента -i
     int flag_o = 0;     // флаг на наличие аргумента -o
-    int out_place;          
+    int out_place; 
+    int in_place;         
 
     FILE *file_in;
     FILE *file_out;
@@ -35,7 +36,11 @@ int main (int argc, char *argv[])
     // проверка наличия аргументов -i и -o
     for (int i = 1; i < argc; i++)
 	{
-		if (!strcmp(argv[i], "-i")) flag_i = 1;
+		if (!strcmp(argv[i], "-i")) 
+        {
+            flag_i = 1;
+            in_place = i + 1;
+        }
 		if (!strcmp(argv[i], "-o")) 
 		{
 			flag_o = 1;
@@ -47,12 +52,12 @@ int main (int argc, char *argv[])
     if (flag_i) 
 	{
 		// открываем файл, указанный вторым аргументом, значение mode — файл для чтения
-        if ((file_in = fopen(argv[2], "r")) == NULL) 
+        if ((file_in = fopen(argv[in_place], "r")) == NULL) 
 		{ 
-            printf("File '%s' is not found\n", argv[2]);
+            printf("File '%s' is not found\n", argv[in_place]);
             return 1;
         }
-        printf("Input status: Input from file '%s':\n", argv[2]);
+        printf("Input status: Input from file '%s':\n", argv[in_place]);
     }
 	else 
 	{
@@ -79,10 +84,10 @@ int main (int argc, char *argv[])
 
     // реализация процесса добавления элементов в дерево
     BinTree *tree = NULL;
-    int total_amount = 0;          // общее количество слов в тексте
-    int max_entry_num = 0;         // максимальное количество вхождений слова в дереве
-    char *tmp = (char*)malloc(2);  // добавляемое слово
-    int tmp_numb = 0;              // количество символов в массиве tmp
+    int total_amount = 0;                           // общее количество слов в тексте
+    int max_entry_num = 0;                          // максимальное количество вхождений слова в дереве
+    char *tmp = (char*)malloc(2 * sizeof(char));    // добавляемое слово
+    int tmp_numb = 0;                               // количество символов в массиве tmp
     char c;
 
     while ((c = getc(file_in)) != EOF)
@@ -102,10 +107,10 @@ int main (int argc, char *argv[])
             total_amount++;
             free(tmp);
             tmp_numb = 0;
-            tmp = (char*)malloc(2);
+            tmp = (char*)malloc(2 * sizeof(char));
         }
         // добавляем слова - знаки препинания
-        if (!isalpha(c) && (c != '\n') && (c != ' ')) 
+        if (!isalpha(c) && (c != '\n') && !isspace(c)) 
 		{
             tmp[tmp_numb] = c;
             tmp_numb++;
@@ -114,7 +119,7 @@ int main (int argc, char *argv[])
             total_amount++; 
             free(tmp);
             tmp_numb = 0; 
-            tmp = (char*)malloc(2);  
+            tmp = (char*)malloc(2 * sizeof(char));  
         }
     }
     if (tmp != NULL) free(tmp);
@@ -136,11 +141,10 @@ BinTree *addWordInTree(BinTree *nodePtr, char *word, int w_size, int *max_entry_
 	if (!nodePtr) //если перед нами пустое дерево, выделяем память и вставляем все данные
 	{
 		nodePtr = (BinTree*)malloc(sizeof(BinTree));
-		nodePtr->word = (char*)malloc(w_size + 1);
+		nodePtr->word = (char*)malloc((w_size + 1) * sizeof(char));
 		nodePtr->entryCount = 1;
 		nodePtr->right = nodePtr->left = NULL;
         strcpy(nodePtr->word, word);
-        (*max_entry_num) = 1;
 	}
     // если непустое и рассматриваемое слово совпадает со словом в дереве, увеличиваем счётчик и переопределяем максимальное число вхождений
 	else if ((word_status = strcmp(nodePtr->word, word)) == 0) 
