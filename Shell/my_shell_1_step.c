@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
     if (flag_i)
     {
         if ((file_in = fopen(argv[2], "r")) == NULL) 
-		    { 
+        { 
             printf("File '%s' is not found\n", argv[2]);
             return 1;
         }
