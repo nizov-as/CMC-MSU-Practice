@@ -9,12 +9,11 @@
 typedef struct _List 
 {
     char *word;             // указатель на слово в звене
-    unsigned int w_size;    // размер слова в звене
     struct _List *next;     // указатель на следующий элемент звена
 } List;
 
 //добавление слова в список
-List *addStdinWordInList (List *node, char *current_word, int size);
+List *addStdinWordInList (List *node, char *current_word);
 
 // печать списка
 void printList(List *node);
@@ -72,7 +71,7 @@ int main (int argc, char *argv[])
             if (tmp_size > 0) // добавляем слово в список только если в нём есть хотя бы один символ (исключаем добавление мусора)
             {
                 tmp[tmp_size] = 0;
-                tmp_list = addStdinWordInList(tmp_list, tmp, tmp_size);
+                tmp_list = addStdinWordInList(tmp_list, tmp);
                 tmp_size = 0;
                 free(tmp);
                 tmp_reserve = 3; 
@@ -92,7 +91,7 @@ int main (int argc, char *argv[])
                     else ungetc (b, file_in); // если повторения управляющего символа нет, возвращаем символ b в поток ввода, чтобы обработать на следующей итерации
                 }
                 tmp[tmp_size] = 0;
-                tmp_list = addStdinWordInList(tmp_list, tmp, tmp_size);
+                tmp_list = addStdinWordInList(tmp_list, tmp);
                 tmp_size = 0;
                 free(tmp);
                 tmp_reserve = 3; 
@@ -126,17 +125,17 @@ int main (int argc, char *argv[])
 
 //========================================================
 
-List *addStdinWordInList (List *node, char *current_word, int size)
+List *addStdinWordInList (List *node, char *current_word)
 {
     if (node == NULL)
     {
         node = (List*)malloc(sizeof(List));
-        node->word = (char*)malloc((size + 1) * sizeof(char));
+        node->word = (char*)malloc((strlen(current_word) + 1) * sizeof(char));
         strcpy(node->word, current_word);
-        node->w_size = size;
+        // node->w_size = size;
         node->next = NULL;
     }
-    else node->next = addStdinWordInList (node->next, current_word, size);
+    else node->next = addStdinWordInList (node->next, current_word);
     return node;
 }
 
