@@ -132,7 +132,6 @@ List *addStdinWordInList (List *node, char *current_word)
         node = (List*)malloc(sizeof(List));
         node->word = (char*)malloc((strlen(current_word) + 1) * sizeof(char));
         strcpy(node->word, current_word);
-        // node->w_size = size;
         node->next = NULL;
     }
     else node->next = addStdinWordInList (node->next, current_word);
