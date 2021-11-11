@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
 
     // проверка наличия аргумента -i
     for (int i = 1; i < argc; i++)
-		if (!strcmp(argv[i], "-i")) flag_i = 1;
+        if (!strcmp(argv[i], "-i")) flag_i = 1;
 
     // инициализация ввода
     if (flag_i)
@@ -52,9 +52,9 @@ int main (int argc, char *argv[])
     int tmp_size = 0;                                        // размер добавляемого слова
     int tmp_reserve = 3;                                     // зарезервированный объем памяти под массив tmp (именно 3 для обработки управляющих слов типа &&)
     char *tmp = (char*)malloc(tmp_reserve * sizeof(char));   // добавляемое слово
+    int quotes_are_open = 0;                                 // флаг: открыты ли кавычки
     char c;                                                  // рассматриваемый символ
-    char b;                                                  // вспомогательный символ
-    int quotes_are_open = 0;                                 // флаг: открыты ли кавычки     
+    char b;                                                  // вспомогательный символ     
 
     char control_symbols[] = "<;()&|>";                      // строка из всех управляющих символов
     char unclear_control_symbols[] = "&|>";                  // строка из управляющих символов, которые могут быть двойными
