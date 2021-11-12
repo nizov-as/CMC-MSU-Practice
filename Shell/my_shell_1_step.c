@@ -13,7 +13,7 @@ typedef struct _List
 } List;
 
 //добавление слова в список
-List *addStdinWordInList (List *node, char *current_word);
+List *addWordInList (List *node, char *current_word);
 
 // печать списка
 void printList(List *node);
@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
                 if (tmp_size > 0) // добавляем слово в список только если в нём есть хотя бы один символ (исключаем добавление мусора)
                 {
                     tmp[tmp_size] = 0;
-                    tmp_list = addStdinWordInList(tmp_list, tmp);
+                    tmp_list = addWordInList(tmp_list, tmp);
                     tmp_size = 0;
                     free(tmp);
                     tmp_reserve = 3; 
@@ -97,7 +97,7 @@ int main (int argc, char *argv[])
                         else ungetc (b, file_in); // если повторения управляющего символа нет, возвращаем символ b в поток ввода, чтобы обработать на следующей итерации
                     }
                     tmp[tmp_size] = 0;
-                    tmp_list = addStdinWordInList(tmp_list, tmp);
+                    tmp_list = addWordInList(tmp_list, tmp);
                     tmp_size = 0;
                     free(tmp);
                     tmp_reserve = 3; 
@@ -121,7 +121,7 @@ int main (int argc, char *argv[])
             }
         }
         tmp[tmp_size] = 0;
-        tmp_list = addStdinWordInList(tmp_list, tmp);
+        tmp_list = addWordInList(tmp_list, tmp);
         tmp_size = 0;
         free(tmp);
         tmp_reserve = 3; 
@@ -139,7 +139,7 @@ int main (int argc, char *argv[])
 
 //========================================================
 
-List *addStdinWordInList (List *node, char *current_word)
+List *addWordInList (List *node, char *current_word)
 {
     if (node == NULL)
     {
@@ -148,7 +148,7 @@ List *addStdinWordInList (List *node, char *current_word)
         strcpy(node->word, current_word);
         node->next = NULL;
     }
-    else node->next = addStdinWordInList (node->next, current_word);
+    else node->next = addWordInList (node->next, current_word);
     return node;
 }
 
