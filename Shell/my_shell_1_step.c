@@ -12,14 +12,17 @@ typedef struct _List
     struct _List *next;     // указатель на следующий элемент звена
 } List;
 
-//добавление слова в список
+// добавление слова в список
 List *addWordInList (List *node, char *current_word);
 
 // печать списка
 void printList(List *node);
 
-//освобождение памяти
+// освобождение памяти
 void deleteList (List *node);
+
+// чтение одной строки и формирование списка
+List *readLine(FILE *file_in);
 
 int main (int argc, char *argv[])
 {
@@ -47,90 +50,18 @@ int main (int argc, char *argv[])
     }
 
     // реализация заполнения списка
-    char c = '\0';                                           // рассматриваемый символ
-    char b;                                                  // вспомогательный символ     
+    List *tmp_list = NULL;    // формирующийся список из слов 
+    printf("print the line: ");
+    tmp_list = readLine(file_in); 
 
-    char control_symbols[] = "<;()&|>";                      // строка из всех управляющих символов
-    char unclear_control_symbols[] = "&|>";                  // строка из управляющих символов, которые могут быть двойными
-    char *control;
-    char *unclear_control;
-
-    while (c != EOF)
+    while (tmp_list != NULL)
     {
-        List *tmp_list = NULL;                                   // формирующийся список из слов
-        int tmp_size = 0;                                        // размер добавляемого слова
-        int tmp_reserve = 3;                                     // зарезервированный объем памяти под массив tmp (именно 3 для обработки управляющих слов типа &&)
-        char *tmp = (char*)malloc(tmp_reserve * sizeof(char));   // добавляемое слово
-        int quotes_are_open = 0;                                 // флаг: открыты ли кавычки
-        
-        printf("print the line: ");
-
-        while ((c = getc(file_in)) != '\n')
-        {
-            if (c == EOF) break;
-            control = strchr(control_symbols, c);
-            unclear_control = strchr(unclear_control_symbols, c);
-
-            // если кавычки закрыты и считанный символ — это пробел или управляющий символ
-            if (!quotes_are_open && (isspace(c) || (control != NULL))) 
-            {
-                if (tmp_size > 0) // добавляем слово в список только если в нём есть хотя бы один символ (исключаем добавление мусора)
-                {
-                    tmp[tmp_size] = 0;
-                    tmp_list = addWordInList(tmp_list, tmp);
-                    tmp_size = 0;
-                    free(tmp);
-                    tmp_reserve = 3; 
-                    tmp = (char*)malloc(tmp_reserve * sizeof(char));
-                }
-                if (!isspace(c)) // если мы считали не пробел, а управляющий символ, заносим его в tmp
-                {
-                    tmp[tmp_size] = c;
-                    tmp_size ++;
-                    if (unclear_control != NULL) // если управляющий символ может быть двойным (то есть &&, || или >>), делаем проверку, считав следующий
-                    {
-                        if (((b = getc(file_in)) != EOF) && (b == c))
-                        {
-                            tmp[tmp_size] = b;
-                            tmp_size ++;                    
-                        }
-                        else ungetc (b, file_in); // если повторения управляющего символа нет, возвращаем символ b в поток ввода, чтобы обработать на следующей итерации
-                    }
-                    tmp[tmp_size] = 0;
-                    tmp_list = addWordInList(tmp_list, tmp);
-                    tmp_size = 0;
-                    free(tmp);
-                    tmp_reserve = 3; 
-                    tmp = (char*)malloc(tmp_reserve * sizeof(char)); 
-                }
-            }
-            else if (c == '"') // встретив кавычку, меняем её статус с 0 на 1 или наоборот
-            {
-                quotes_are_open = (quotes_are_open + 1) % 2;
-            }
-            else if (!isspace(c) || (isspace(c) && (quotes_are_open))) // если перед нами не пробел ИЛИ пробел при статусе открытых кавычек, то добавляем символ в список
-            {
-                tmp[tmp_size] = c;
-                tmp_size ++;
-
-                if (tmp_size == tmp_reserve) // если размер tmp достиг зарезервированной памяти, увеличиваем резерв и обновляем размер tmp
-                {
-                    tmp_reserve *= 2;
-                    tmp = (char*)realloc(tmp, tmp_reserve * sizeof(char));
-                }
-            }
-        }
-        tmp[tmp_size] = 0;
-        tmp_list = addWordInList(tmp_list, tmp);
-        tmp_size = 0;
-        free(tmp);
-        tmp_reserve = 3; 
-        tmp = (char*)malloc(tmp_reserve * sizeof(char));
-
         printList(tmp_list);
         deleteList(tmp_list);
+
+        printf("print the line: ");
+        tmp_list = readLine(file_in);
     }
-    // if (tmp != NULL) free(tmp);
 
     fclose(file_in);
     
@@ -173,6 +104,89 @@ void deleteList (List *node)
         free (node->word);
         free (node);
     }
+}
+
+//========================================================
+
+List *readLine(FILE *file_in)
+{
+    char c = '\0';                                           // рассматриваемый символ
+    char b;                                                  // вспомогательный символ     
+
+    char control_symbols[] = "<;()&|>";                      // строка из всех управляющих символов
+    char unclear_control_symbols[] = "&|>";                  // строка из управляющих символов, которые могут быть двойными
+    char *control;
+    char *unclear_control;
+
+    List *tmp_list = NULL;                                   // формирующийся список из слов
+    int tmp_size = 0;                                        // размер добавляемого слова
+    int tmp_reserve = 3;                                     // зарезервированный объем памяти под массив tmp (именно 3 для обработки управляющих слов типа &&)
+    char *tmp = (char*)malloc(tmp_reserve * sizeof(char));   // добавляемое слово
+    int quotes_are_open = 0;  
+
+    while ((c = getc(file_in)) != '\n')
+    {
+        if (c == EOF) return NULL;
+        control = strchr(control_symbols, c);
+        unclear_control = strchr(unclear_control_symbols, c);
+
+        // если кавычки закрыты и считанный символ — это пробел или управляющий символ
+        if (!quotes_are_open && (isspace(c) || (control != NULL))) 
+        {
+            if (tmp_size > 0) // добавляем слово в список только если в нём есть хотя бы один символ (исключаем добавление мусора)
+            {
+                tmp[tmp_size] = 0;
+                tmp_list = addWordInList(tmp_list, tmp);
+                tmp_size = 0;
+                free(tmp);
+                tmp_reserve = 3; 
+                tmp = (char*)malloc(tmp_reserve * sizeof(char));
+            }
+            if (control) // если мы считали не пробел, а управляющий символ, заносим его в tmp
+            {
+                tmp[tmp_size] = c;
+                tmp_size ++;
+                if (unclear_control != NULL) // если управляющий символ может быть двойным (то есть &&, || или >>), делаем проверку, считав следующий
+                {
+                    if (((b = getc(file_in)) != EOF) && (b == c))
+                    {
+                        tmp[tmp_size] = b;
+                        tmp_size ++;                    
+                    }
+                    else ungetc (b, file_in); // если повторения управляющего символа нет, возвращаем символ b в поток ввода, чтобы обработать на следующей итерации
+                }
+                tmp[tmp_size] = 0;
+                tmp_list = addWordInList(tmp_list, tmp);
+                tmp_size = 0;
+                free(tmp);
+                tmp_reserve = 3; 
+                tmp = (char*)malloc(tmp_reserve * sizeof(char)); 
+            }
+        }
+        else if (c == '"') // встретив кавычку, меняем её статус с 0 на 1 или наоборот
+        {
+            quotes_are_open = (quotes_are_open + 1) % 2;
+        }
+        else if (!isspace(c) || (isspace(c) && (quotes_are_open))) // если перед нами не пробел ИЛИ пробел при статусе открытых кавычек, то добавляем символ в список
+        {
+            tmp[tmp_size] = c;
+            tmp_size ++;
+
+            if (tmp_size == tmp_reserve) // если размер tmp достиг зарезервированной памяти, увеличиваем резерв и обновляем размер tmp
+            {
+                tmp_reserve *= 2;
+                tmp = (char*)realloc(tmp, tmp_reserve * sizeof(char));
+            }
+        }
+    }
+    tmp[tmp_size] = 0;
+    tmp_list = addWordInList(tmp_list, tmp);
+    tmp_size = 0;
+    free(tmp);
+    tmp_reserve = 3; 
+    tmp = (char*)malloc(tmp_reserve * sizeof(char));
+
+    return tmp_list;
 }
 
 //========================================================
