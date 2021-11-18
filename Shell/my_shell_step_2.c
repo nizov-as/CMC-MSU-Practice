@@ -18,34 +18,28 @@ List *addWordInList (List *node, char *current_word);
 // печать списка
 void printList(List *node);
 
-// освобождение памяти
+// очистка памяти: удаление списка
 void deleteList (List *node);
+
+// очистка памяти: удаление массива
+void deleteArray(char **arr);
 
 // чтение одной строки и формирование списка
 List *readLine(FILE *file_in);
+
+// формирование массива из списка
+char **listToArray(List *node);
+
+// проверка, является ли текущая команда командой cd
+int is_cd(char **arr);
 
 //========================================================
 //========================================================
 
 int main (int argc, char *argv[])
 {
-    int flag_i = 0; // флаг на наличие аргумента -i для чтения из файла
     FILE *file_in;
-
-    // проверка наличия аргумента -i
-    for (int i = 1; i < argc; i++)
-        if (!strcmp(argv[i], "-i")) flag_i = 1;
-
-    // инициализация ввода
-    if (flag_i)
-    {
-        if ((file_in = fopen(argv[2], "r")) == NULL) 
-        {
-            printf("File '%s' is not found\n", argv[2]);
-            return 1;
-        }
-    }
-    else file_in = stdin;
+    file_in = stdin;    
 
     List *tmp_list = NULL;    
     printf("alexandernizov$ ");
@@ -53,9 +47,34 @@ int main (int argc, char *argv[])
 
     while (tmp_list != NULL)
     {
-        printList(tmp_list);
-        deleteList(tmp_list);
+        char **array = NULL;
+        array = listToArray(tmp_list);
 
+        int pid = fork();
+        if(!pid)
+        {
+            //тело сына
+            if (is_cd(array))
+            {
+                if (array[1] == NULL)
+                    chdir(getenv("HOME"));
+                else if (array[2] != NULL)
+                    perror(array[1]);
+                else
+                    chdir(array[1]);
+            }
+            execvp(array[0], array);
+            perror(array[0]);
+            exit(1);
+        }
+        else
+        {
+            //тело отца
+            wait(NULL);
+        }
+
+        deleteList(tmp_list);
+        deleteArray(array);
         printf("alexandernizov$ ");
         tmp_list = readLine(file_in);
     }
@@ -102,6 +121,23 @@ void deleteList (List *node)
         deleteList (node->next);
         free (node->word);
         free (node);
+    }
+}
+
+//========================================================
+
+void deleteArray(char **arr)
+{
+    int i = 0;
+    if (arr != NULL) 
+    {
+        while (arr[i] != NULL)
+        {
+            free(arr[i]);
+            i++;
+        }
+        free(arr[i]);
+        free(arr);
     }
 }
 
@@ -182,6 +218,34 @@ List *readLine(FILE *file_in)
     free(tmp);
 
     return tmp_list;
+}
+
+//========================================================
+
+char **listToArray(List *node)
+{
+    int i = 0;
+    char **arr = NULL;
+    while (node)
+    {
+        arr = (char**)realloc(arr, (i + 2) * sizeof(char*));
+        arr[i] = (char*)malloc((strlen(node->word) + 1) * sizeof(char));
+        strcpy(arr[i], node->word);
+        i++;
+        node = node->next;
+    }
+    arr[i] = NULL;
+    return arr;
+}
+
+//========================================================
+
+int is_cd(char **arr)
+{
+    if (!strcmp(arr[0], "cd"))
+        return 1;
+    else 
+        return 0;
 }
 
 //========================================================
