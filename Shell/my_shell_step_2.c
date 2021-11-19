@@ -63,9 +63,13 @@ int main (int argc, char *argv[])
                 else
                     chdir(array[1]);
             }
-            execvp(array[0], array);
-            perror(array[0]);
-            exit(1);
+            else
+            {
+                execvp(array[0], array);
+                perror(array[0]);
+                exit(1);
+            }
+
         }
         else
         {
