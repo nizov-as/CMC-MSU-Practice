@@ -76,7 +76,10 @@ int main (int argc, char *argv[])
             else
             {
                 //тело отца
-                wait(NULL);
+                int status, wr;
+                wr = wait(&status);
+                if (wr == -1)
+                    printf ("There are no child processes");
             }
         }
 
