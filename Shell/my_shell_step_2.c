@@ -86,6 +86,7 @@ int main (int argc, char *argv[])
         tmp_list = readLine(file_in, &not_only_enter);
     }
     
+    deleteList(tmp_list);
     free(tmp_list);
     fclose(file_in);
     
@@ -123,11 +124,17 @@ void printList(List *node)
 
 void deleteList (List *node)
 {
-    while (!node)
+    if (node != NULL)
     {
-        deleteList (node->next);
-        free (node->word);
-        free (node);
+        if (node->next != NULL)
+            deleteList (node->next);
+        if (node->word != NULL)
+        {
+            free(node->word);
+            node->word = NULL;
+        }
+        free(node);
+        node = NULL;
     }
 }
 
@@ -141,10 +148,13 @@ void deleteArray(char **arr)
         while (arr[i] != NULL)
         {
             free(arr[i]);
+            arr[i] = NULL;
             i++;
         }
         free(arr[i]);
+        arr[i] = NULL;
         free(arr);
+        arr = NULL;
     }
 }
 
@@ -165,7 +175,12 @@ List *readLine(FILE *file_in, int *not_only_enter)
 
     while ((c = getc(file_in)) != '\n')
     {
-        if (c == EOF) return NULL;
+        *not_only_enter = 1;
+        if (c == EOF) 
+        {
+            free(tmp);
+            return NULL;
+        }
         control = strchr(control_symbols, c);
         unclear_control = strchr(unclear_control_symbols, c);
 
@@ -218,15 +233,13 @@ List *readLine(FILE *file_in, int *not_only_enter)
                 tmp = (char*)realloc(tmp, tmp_reserve * sizeof(char));
             }
         }
-    *not_only_enter = 1;
     }
     if (not_only_enter)
     {
         tmp[tmp_size] = '\0';
         tmp_list = addWordInList(tmp_list, tmp);
-        free(tmp);
     }
-
+    free(tmp);
     return tmp_list;
 }
 
