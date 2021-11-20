@@ -25,7 +25,7 @@ void deleteList (List *node);
 void deleteArray(char **arr);
 
 // чтение одной строки и формирование списка
-List *readLine(FILE *file_in);
+List *readLine(FILE *file_in, int *not_only_enter);
 
 // формирование массива из списка
 char **listToArray(List *node);
@@ -41,46 +41,49 @@ int main (int argc, char *argv[])
     FILE *file_in;
     file_in = stdin;    
 
+    int not_only_enter = 0;
     List *tmp_list = NULL;    
     printf("alexandernizov$ ");
-    tmp_list = readLine(file_in); 
+    tmp_list = readLine(file_in, &not_only_enter); 
 
     while (tmp_list != NULL)
     {
         char **array = NULL;
         array = listToArray(tmp_list);
 
-        int pid = fork();
-        if(!pid)
+        if(not_only_enter)
         {
-            //тело сына
-            if (is_cd(array))
+            int pid = fork();
+            if(!pid)
             {
-                if (array[1] == NULL)
-                    chdir(getenv("HOME"));
-                else if (array[2] != NULL)
-                    perror(array[1]);
+                //тело сына
+                if (is_cd(array))
+                {
+                    if (array[1] == NULL)
+                        chdir(getenv("HOME"));
+                    else if (array[2] != NULL)
+                        perror(array[2]);
+                    else
+                        chdir(array[1]);
+                }
                 else
-                    chdir(array[1]);
+                {
+                    execvp(array[0], array);
+                    perror(array[0]);
+                    exit(1);
+                }
             }
             else
             {
-                execvp(array[0], array);
-                perror(array[0]);
-                exit(1);
+                //тело отца
+                wait(NULL);
             }
-
-        }
-        else
-        {
-            //тело отца
-            wait(NULL);
         }
 
         deleteList(tmp_list);
         deleteArray(array);
         printf("alexandernizov$ ");
-        tmp_list = readLine(file_in);
+        tmp_list = readLine(file_in, &not_only_enter);
     }
     
     free(tmp_list);
@@ -147,7 +150,7 @@ void deleteArray(char **arr)
 
 //========================================================
 
-List *readLine(FILE *file_in)
+List *readLine(FILE *file_in, int *not_only_enter)
 {
     char c;                                                  // рассматриваемый символ  
     char control_symbols[] = "<;()&|>";                      // строка из всех управляющих символов
@@ -215,11 +218,14 @@ List *readLine(FILE *file_in)
                 tmp = (char*)realloc(tmp, tmp_reserve * sizeof(char));
             }
         }
+    *not_only_enter = 1;
     }
-    tmp[tmp_size] = '\0';
-    tmp_list = addWordInList(tmp_list, tmp);
-    tmp_size = 0;
-    free(tmp);
+    if (not_only_enter)
+    {
+        tmp[tmp_size] = '\0';
+        tmp_list = addWordInList(tmp_list, tmp);
+        free(tmp);
+    }
 
     return tmp_list;
 }
