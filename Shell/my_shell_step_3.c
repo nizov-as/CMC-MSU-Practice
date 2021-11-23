@@ -310,7 +310,7 @@ void cmdProcessing (char **arr, int *length)
     }
     else if (is_exit(arr))
     {
-        exit(1);
+        exit(0);
     }
     else
     {
@@ -334,8 +334,7 @@ void cmdProcessing (char **arr, int *length)
                 else if (is_redir == 2) // это значит что перед нами команда ">"
                 {
                     printf("file name is: %s\n", arr[file_name_index]); // отладочная печать
-                    fflush(stdout);
-                    file = open(arr[file_name_index], O_CREAT | O_WRONLY | O_TRUNC, 0666);
+                    int file = open(arr[file_name_index], O_CREAT | O_WRONLY | O_TRUNC, 0666);
                     if (file == -1)
                         perror(arr[file_name_index]);
                     dup2(file, 1);
@@ -351,12 +350,9 @@ void cmdProcessing (char **arr, int *length)
                     close(file);
                 }
             }
-            else
-            {
-                execvp(arr[0], arr);
-                perror(arr[0]);
-                exit(1);
-            }
+            execvp(arr[0], arr);
+            perror(arr[0]);
+            exit(2);
         }
         else
         {
@@ -364,6 +360,7 @@ void cmdProcessing (char **arr, int *length)
             wr = wait(&status);
             if (wr == -1)
                 printf ("There are no child processes");
+            printf("Ok\n");
         }
     }
     dup2(save0, 0);
