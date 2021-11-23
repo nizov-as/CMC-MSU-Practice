@@ -349,6 +349,8 @@ void cmdProcessing (char **arr, int *length)
                     dup2(file, 0);
                     close(file);
                 }
+                free(arr[file_name_index]);       // освобождаем элемент массива с именем файла
+                arr[file_name_index-1] = NULL;    // уменьшаем массив до размера команды, которую будем подавать функции execvp()
             }
             execvp(arr[0], arr);
             perror(arr[0]);
