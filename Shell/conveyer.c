@@ -17,14 +17,17 @@ typedef struct _List
 // добавление слова в список
 List *addWordInList (List *node, char *current_word);
 
-// печать списка
-void printList(List *node);
+// печати:
+void printList(List *node);                       // печать списка
+void printArr(char** arr);                        // печать массива
+void printDoubleArr(char ***arr, int *length);    // печать двумерного массива
 
 // очистка памяти: удаление списка
 void deleteList (List *node);
 
 // очистка памяти: удаление массива
 void deleteArray(char **arr);
+void deleteDoubleArray(char ***arr, int *length);
 
 // чтение одной строки и формирование списка
 List *readLine(int *not_only_enter);
@@ -36,9 +39,14 @@ char **listToArray(List *node, int *length);
 int is_cd(char **arr);                                                // на команду cd
 int is_exit(char **arr);                                              // на команду exit
 int is_redirection(char **arr, int *file_name_index, int *length);    // на команду перенаправления ввода/вывода
+int is_conveyer(char **arr, int *length);                             // на то, имеется ли в строке конвейерный символ
+
+char **makeArrayForOneProc (List **node);
+char ***makeArrayForConveyer (List **node, int *length);
+int howMuchElements (List *node);
 
 // обработка текущей команды
-void cmdProcessing (char **arr, int *length);
+void cmdProcessing (char ***arr, int *length);
 
 //========================================================
 //========================================================
@@ -47,15 +55,15 @@ int main (int argc, char *argv[])
 {   
     int not_only_enter = 0;
     int arr_length;
-    List *tmp_list = NULL;    
+    List *tmp_list = NULL;      
     printf("alexandernizov$ ");
 
     tmp_list = readLine(&not_only_enter); 
 
     while (tmp_list != NULL)
     {
-        char **array = NULL;
-        array = listToArray(tmp_list, &arr_length);
+        char ***array = NULL;
+        array = makeArrayForConveyer(&tmp_list, &arr_length);
 
         if(not_only_enter)
         {
@@ -63,7 +71,7 @@ int main (int argc, char *argv[])
         }
         
         deleteList(tmp_list);
-        deleteArray(array);
+        deleteDoubleArray(array, &arr_length);
         printf("alexandernizov$ ");
         tmp_list = readLine(&not_only_enter);
     }
@@ -103,6 +111,28 @@ void printList(List *node)
 
 //========================================================
 
+void printArr(char** arr)
+{    
+    int j = 0;
+    while(arr[j] != NULL)
+	{
+		printf("__%s__ ", arr[j]);
+        j++;
+	}
+    printf("\n");
+}
+
+void printDoubleArr(char ***arr, int *length)
+{   
+    int j;
+	for (j = 0; j <= *length; j++)
+        printArr(arr[j]);
+
+    printf("\n");
+}
+
+//========================================================
+
 void deleteList (List *node)
 {
     if (node != NULL)
@@ -137,6 +167,15 @@ void deleteArray(char **arr)
         free(arr);
         arr = NULL;
     }
+}
+
+void deleteDoubleArray(char ***arr, int *length)
+{
+    int j;
+	for (j = 0; j <= *length; j++)
+        deleteArray(arr[j]);
+    free(arr);
+    arr = NULL;
 }
 
 //========================================================
@@ -291,63 +330,128 @@ int is_redirection(char **arr, int *file_name_index, int *length)
 
 //========================================================
 
-void cmdProcessing (char **arr, int *length)
+int is_conveyer(char **arr, int *length)
 {
-    int file, file_name_index;
-    int is_redir = is_redirection(arr, &file_name_index, length);
+    int i;
+    for (i = 0; i < *length; i++)
+    {
+        if (!strcmp(arr[i], "|"))
+            return 1;
+    }
+    return 0;
+}
+
+//========================================================
+
+int howMuchElements(List *node)
+{
+	int counter = 0;
+	while (node)
+	{
+		if (!strcmp(node->word, "|"))
+		{
+			counter++;
+		}
+		node = node->next;
+	}	
+	return counter + 1;
+}
+
+//========================================================
+
+char **makeArrayForOneProc(List **node)
+{
+    int i = 0;
+    char **new_arr = NULL;
+    while ((*node) && strcmp((*node)->word, "|"))
+    {
+        new_arr = (char**)realloc(new_arr, (i + 2) * sizeof(char*));
+        new_arr[i] = (char*)malloc((strlen((*node)->word) + 1) * sizeof(char));
+        strcpy(new_arr[i], (*node)->word);
+        i++;
+        (*node) = (*node)->next;
+    }
+    new_arr[i] = NULL;
+    return new_arr;
+}
+
+//========================================================
+
+char ***makeArrayForConveyer(List **node, int *length)
+{
+    char ***conveyerArray = (char***)malloc(sizeof(char*) * (howMuchElements(*node)+1));
+    int counter = 0;
+    while (*node)
+    {
+        conveyerArray[counter] = makeArrayForOneProc(node);
+        counter++;
+    }
+    *length = counter;
+    return conveyerArray;
+}
+
+//========================================================
+
+void cmdProcessing (char ***arr, int *length)
+{
+    // int file;
+    // int file_name_index;
+    // int is_redir = is_redirection(arr, &file_name_index, length);
     int save0 = dup(0);
     int save1 = dup(1);
+    int pid;
     
-    if (is_cd(arr))
+    if (is_cd(arr[0]))
     {
-        if (arr[1] == NULL)
+        if (arr[0][1] == NULL)
             chdir(getenv("HOME"));
-        else if (arr[2] != NULL)
-            perror(arr[2]);
+        else if (arr[0][2] != NULL)
+            perror(arr[0][2]);
         else
-            chdir(arr[1]);
+            chdir(arr[0][1]);
     }
-    else if (is_exit(arr))
+    else if (is_exit(arr[0]))
     {
         exit(0);
     }
     else
     {
-        int pid = fork();
-        if(!pid)
+        pid = fork();
+        if (!pid)
         {
-            if (is_redir)
+            printf("length val is: %d\n", *length);
+            if (*length == 1)
             {
-                if (is_redir == 1) // это значит что перед нами команда ">>"
-                {
-                    file = open(arr[file_name_index], O_CREAT | O_WRONLY | O_APPEND, 0666);
-                    if (file == -1)
-                        perror(arr[file_name_index]);
-                    dup2(file, 1);
-                    close(file);
-                }
-                else if (is_redir == 2) // это значит что перед нами команда ">"
-                {
-                    int file = open(arr[file_name_index], O_CREAT | O_WRONLY | O_TRUNC, 0666);
-                    if (file == -1)
-                        perror(arr[file_name_index]);
-                    dup2(file, 1);
-                    close(file);
-                }
-                else if (is_redir == 3) // это значит что перед нами команда "<"
-                {
-                    file = open(arr[file_name_index], O_RDONLY);
-                    if (file == -1)
-                        perror(arr[file_name_index]);
-                    dup2(file, 0);
-                    close(file);
-                }
-                free(arr[file_name_index]);       // освобождаем элемент массива с именем файла
-                arr[file_name_index-1] = NULL;    // уменьшаем массив до размера команды, которую будем подавать функции execvp()
+                execvp(arr[0][0], arr[0]);
+                perror(arr[0][0]);
+                exit(1);
             }
-            execvp(arr[0], arr);
-            perror(arr[0]);
-            exit(2);
+            else
+            {
+                printDoubleArr(arr, length);
+                int i = 0;
+                int fd[2];
+                while (i < *length)
+                {
+                    pipe(fd);
+                    pid = fork();
+                    if(!pid)
+                    {
+                        if (i+1 != *length)
+                            dup2(fd[1], 1);
+                        close(fd[0]);
+                        close(fd[1]);
+                        execvp(arr[i][0], arr[i]);
+                        perror(arr[i][0]);
+                        exit(1);
+                    }
+                    dup2(fd[0], 0);
+                    close(fd[0]);
+                    close(fd[1]);
+                    i++;
+                }
+                while (wait(NULL) != -1);
+            }
         }
         else
         {
@@ -355,7 +459,6 @@ void cmdProcessing (char **arr, int *length)
             wr = wait(&status);
             if (wr == -1)
                 printf ("There are no child processes");
-            printf("Ok\n");
         }
     }
     dup2(save0, 0);
@@ -363,5 +466,4 @@ void cmdProcessing (char **arr, int *length)
     close(save0);
     close(save1);
 }
-
 //========================================================
