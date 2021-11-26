@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
     {
         char ***array = NULL;
         array = makeArrayForConveyer(&tmp_list, &arr_length);
-
+        printf("arr length: %d\n", arr_length);
         if(not_only_enter)
         {
             cmdProcessing(array, &arr_length);
@@ -125,7 +125,7 @@ void printArr(char** arr)
 void printDoubleArr(char ***arr, int *length)
 {   
     int j;
-	for (j = 0; j <= *length; j++)
+	for (j = 0; j < *length; j++)
         printArr(arr[j]);
 
     printf("\n");
@@ -172,7 +172,7 @@ void deleteArray(char **arr)
 void deleteDoubleArray(char ***arr, int *length)
 {
     int j;
-	for (j = 0; j <= *length; j++)
+	for (j = 0; j < *length; j++)
         deleteArray(arr[j]);
     free(arr);
     arr = NULL;
