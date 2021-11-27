@@ -65,6 +65,7 @@ int main (int argc, char *argv[])
         char ***array = NULL;
         array = makeArrayForConveyer(&tmp_list, &arr_length);
         printf("arr length: %d\n", arr_length);
+
         if(not_only_enter)
         {
             cmdProcessing(array, &arr_length);
@@ -371,6 +372,7 @@ char **makeArrayForOneProc(List **node)
         i++;
         (*node) = (*node)->next;
     }
+    if(*node) (*node) = (*node)->next;
     new_arr[i] = NULL;
     return new_arr;
 }
@@ -379,7 +381,7 @@ char **makeArrayForOneProc(List **node)
 
 char ***makeArrayForConveyer(List **node, int *length)
 {
-    char ***conveyerArray = (char***)malloc(sizeof(char*) * (howMuchElements(*node)+1));
+    char ***conveyerArray = (char***)malloc(sizeof(char**) * (howMuchElements(*node)));
     int counter = 0;
     while (*node)
     {
@@ -419,39 +421,30 @@ void cmdProcessing (char ***arr, int *length)
         pid = fork();
         if (!pid)
         {
-            printf("length val is: %d\n", *length);
-            if (*length == 1)
+            // printf("length val is: %d\n", *length);
+            printDoubleArr(arr, length);
+            int i = 0;
+            int fd[2];
+            while (i < *length)
             {
-                execvp(arr[0][0], arr[0]);
-                perror(arr[0][0]);
-                exit(1);
-            }
-            else
-            {
-                printDoubleArr(arr, length);
-                int i = 0;
-                int fd[2];
-                while (i < *length)
+                pipe(fd);
+                pid = fork();
+                if(!pid)
                 {
-                    pipe(fd);
-                    pid = fork();
-                    if(!pid)
-                    {
-                        if (i+1 != *length)
-                            dup2(fd[1], 1);
-                        close(fd[0]);
-                        close(fd[1]);
-                        execvp(arr[i][0], arr[i]);
-                        perror(arr[i][0]);
-                        exit(1);
-                    }
-                    dup2(fd[0], 0);
+                    if (i+1 != *length)
+                        dup2(fd[1], 1);
                     close(fd[0]);
                     close(fd[1]);
-                    i++;
+                    execvp(arr[i][0], arr[i]);
+                    perror(arr[i][0]);
+                    exit(1);
                 }
-                while (wait(NULL) != -1);
+                dup2(fd[0], 0);
+                close(fd[0]);
+                close(fd[1]);
+                i++;
             }
+            while (wait(NULL) != -1);
         }
         else
         {
