@@ -26,8 +26,8 @@ void printDoubleArr(char ***arr, int *length);    // печать двумерн
 void deleteList (List *node);
 
 // очистка памяти: удаление массива
-void deleteArray(char **arr);
-void deleteDoubleArray(char ***arr, int *length);
+void deleteArray(char **arr);                        // удаление одномерного массива
+void deleteDoubleArray(char ***arr, int *length);    // удаление двумерного массива
 
 // чтение одной строки и формирование списка
 List *readLine(int *not_only_enter);
@@ -41,9 +41,10 @@ int is_exit(char **arr);                                              // на к
 int is_redirection(char **arr, int *file_name_index, int *length);    // на команду перенаправления ввода/вывода
 int is_conveyer(char **arr, int *length);                             // на то, имеется ли в строке конвейерный символ
 
-char **makeArrayForOneProc (List **node);
-char ***makeArrayForConveyer (List **node, int *length);
-int howMuchElements (List *node);
+//функции для создания двумерного массива
+int howMuchElements (List *node);                           // подсчёт числа элементов списка (для корректного выделения памяти)
+char **makeArrayForOneProc (List **node);                   // создание одномерного массива
+char ***makeArrayForConveyer (List **node, int *length);    // создание массива из одномерных массивов
 
 // обработка текущей команды
 void cmdProcessing (char ***arr, int *length);
@@ -64,7 +65,7 @@ int main (int argc, char *argv[])
     {
         char ***array = NULL;
         array = makeArrayForConveyer(&tmp_list, &arr_length);
-        printf("arr length: %d\n", arr_length);
+        //printf("arr length: %d\n", arr_length);
 
         if(not_only_enter)
         {
@@ -117,7 +118,7 @@ void printArr(char** arr)
     int j = 0;
     while(arr[j] != NULL)
 	{
-		printf("__%s__ ", arr[j]);
+		printf("%s, ", arr[j]);
         j++;
 	}
     printf("\n");
@@ -127,8 +128,10 @@ void printDoubleArr(char ***arr, int *length)
 {   
     int j;
 	for (j = 0; j < *length; j++)
+    {
         printArr(arr[j]);
-
+        printf("\n");
+    }
     printf("\n");
 }
 
@@ -173,10 +176,14 @@ void deleteArray(char **arr)
 void deleteDoubleArray(char ***arr, int *length)
 {
     int j;
-	for (j = 0; j < *length; j++)
-        deleteArray(arr[j]);
-    free(arr);
-    arr = NULL;
+    //printf("length val is: %d\n", *length);
+    if (arr != NULL)
+    {
+        for (j = 0; j < *length; j++)
+            deleteArray(arr[j]);
+        free(arr);
+        arr = NULL;
+    }
 }
 
 //========================================================
@@ -372,7 +379,8 @@ char **makeArrayForOneProc(List **node)
         i++;
         (*node) = (*node)->next;
     }
-    if(*node) (*node) = (*node)->next;
+    if (*node)
+        (*node) = (*node)->next;
     new_arr[i] = NULL;
     return new_arr;
 }
@@ -381,7 +389,7 @@ char **makeArrayForOneProc(List **node)
 
 char ***makeArrayForConveyer(List **node, int *length)
 {
-    char ***conveyerArray = (char***)malloc(sizeof(char**) * (howMuchElements(*node)));
+    char ***conveyerArray = (char***)malloc((howMuchElements(*node)) * sizeof(char**));
     int counter = 0;
     while (*node)
     {
@@ -422,7 +430,7 @@ void cmdProcessing (char ***arr, int *length)
         if (!pid)
         {
             // printf("length val is: %d\n", *length);
-            printDoubleArr(arr, length);
+            // printDoubleArr(arr, length);
             int i = 0;
             int fd[2];
             while (i < *length)
