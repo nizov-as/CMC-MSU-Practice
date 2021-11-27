@@ -32,14 +32,10 @@ void deleteDoubleArray(char ***arr, int *length);    // удаление дву�
 // чтение одной строки и формирование списка
 List *readLine(int *not_only_enter);
 
-// формирование массива из списка
-char **listToArray(List *node, int *length);
-
 // проверки на конкретные команды:
-int is_cd(char **arr);                                                // на команду cd
-int is_exit(char **arr);                                              // на команду exit
-int is_redirection(char **arr, int *file_name_index, int *length);    // на команду перенаправления ввода/вывода
-int is_conveyer(char **arr, int *length);                             // на то, имеется ли в строке конвейерный символ
+int is_cd(char **arr);                                            // на команду cd
+int is_exit(char **arr);                                          // на команду exit
+int is_redirection(char **arr, int *first_redir_symbol_place);    // на команду перенаправления ввода/вывода
 
 //функции для создания двумерного массива
 int howMuchElements (List *node);                           // подсчёт числа элементов списка (для корректного выделения памяти)
@@ -48,6 +44,9 @@ char ***makeArrayForConveyer (List **node, int *length);    // создание 
 
 // обработка текущей команды
 void cmdProcessing (char ***arr, int *length);
+
+//обработка команды перенаправления ввода-вывода
+char **redirectionProcessing(char **arr, int first_redir_symbol_place);
 
 //========================================================
 //========================================================
@@ -65,7 +64,6 @@ int main (int argc, char *argv[])
     {
         char ***array = NULL;
         array = makeArrayForConveyer(&tmp_list, &arr_length);
-        //printf("arr length: %d\n", arr_length);
 
         if(not_only_enter)
         {
@@ -121,7 +119,7 @@ void printArr(char** arr)
 		printf("%s, ", arr[j]);
         j++;
 	}
-    printf("\n");
+    printf("%s\n", arr[j]);
 }
 
 void printDoubleArr(char ***arr, int *length)
@@ -130,7 +128,6 @@ void printDoubleArr(char ***arr, int *length)
 	for (j = 0; j < *length; j++)
     {
         printArr(arr[j]);
-        printf("\n");
     }
     printf("\n");
 }
@@ -176,7 +173,6 @@ void deleteArray(char **arr)
 void deleteDoubleArray(char ***arr, int *length)
 {
     int j;
-    //printf("length val is: %d\n", *length);
     if (arr != NULL)
     {
         for (j = 0; j < *length; j++)
@@ -273,25 +269,6 @@ List *readLine(int *not_only_enter)
 
 //========================================================
 
-char **listToArray(List *node, int *length)
-{
-    int i = 0;
-    char **arr = NULL;
-    while (node)
-    {
-        arr = (char**)realloc(arr, (i + 2) * sizeof(char*));
-        arr[i] = (char*)malloc((strlen(node->word) + 1) * sizeof(char));
-        strcpy(arr[i], node->word);
-        i++;
-        node = node->next;
-    }
-    *length = i;
-    arr[i] = NULL;
-    return arr;
-}
-
-//========================================================
-
 int is_cd(char **arr)
 {
     if (!strcmp(arr[0], "cd"))
@@ -312,43 +289,66 @@ int is_exit(char **arr)
 
 //========================================================
 
-int is_redirection(char **arr, int *file_name_index, int *length)
+int is_redirection(char **arr, int *first_redir_symbol_place)
 {
-    int i;
-    for(i = 0; i < *length; i++)
+    int i = 0;
+    while(arr[i] != NULL)
     {
-        if (!strcmp(arr[i], ">>"))
+        if (!strcmp(arr[i], ">>") || !strcmp(arr[i], ">") || !strcmp(arr[i], "<"))
         {
-            *file_name_index = i+1;
+            *first_redir_symbol_place = i;
             return 1;
         }
-        else if (!strcmp(arr[i], ">"))
-        {
-            *file_name_index = i+1;
-            return 2;
-        }
-        else if (!strcmp(arr[i], "<"))
-        {
-            *file_name_index = i+1;
-            return 3;
-        }
+        i++;
     }
     return 0;
 }
 
 //========================================================
 
-int is_conveyer(char **arr, int *length)
-{
-    int i;
-    for (i = 0; i < *length; i++)
+char **redirectionProcessing(char **arr, int first_redir_symbol_place)
+{                                                                         
+    int file;
+    int i = 0;
+    while (arr[i] != NULL)
     {
-        if (!strcmp(arr[i], "|"))
-            return 1;
+        if (!strcmp(arr[i], ">>"))
+        {
+            file = open(arr[i+1], O_CREAT | O_WRONLY | O_APPEND, 0666);
+            if (file == -1)
+                perror(arr[i+1]);
+            dup2(file, 1);
+            close(file);
+        }
+        else if (!strcmp(arr[i], ">"))
+        {
+            file = open(arr[i+1], O_CREAT | O_WRONLY | O_TRUNC, 0666);
+            if (file == -1)
+                perror(arr[i+1]);
+            dup2(file, 1);
+            close(file);        
+        }
+        else if (!strcmp(arr[i], "<"))
+        {
+            file = open(arr[i+1], O_RDONLY);
+            if (file == -1)
+                perror(arr[i+1]);
+            dup2(file, 0);
+            close(file);          
+        }
+        i++;            
     }
-    return 0;
-}
 
+    i = first_redir_symbol_place;
+    while (arr[i] != NULL)    // удаляем из массива всё, что идёт после команды, которую мы будем подавать фукнции execvp()
+    {
+        free(arr[i]);   
+        arr[i] = NULL;
+        i++;
+    }
+    
+    return arr;
+}
 //========================================================
 
 int howMuchElements(List *node)
@@ -404,12 +404,10 @@ char ***makeArrayForConveyer(List **node, int *length)
 
 void cmdProcessing (char ***arr, int *length)
 {
-    // int file;
-    // int file_name_index;
-    // int is_redir = is_redirection(arr, &file_name_index, length);
     int save0 = dup(0);
     int save1 = dup(1);
     int pid;
+    int first_redir_symbol_place;
     
     if (is_cd(arr[0]))
     {
@@ -429,16 +427,19 @@ void cmdProcessing (char ***arr, int *length)
         pid = fork();
         if (!pid)
         {
-            // printf("length val is: %d\n", *length);
-            // printDoubleArr(arr, length);
             int i = 0;
             int fd[2];
             while (i < *length)
-            {
+            {   
                 pipe(fd);
                 pid = fork();
                 if(!pid)
                 {
+                    if (is_redirection(arr[i], &first_redir_symbol_place))
+                    {
+                        arr[i] = redirectionProcessing(arr[i], first_redir_symbol_place);
+                    }
+
                     if (i+1 != *length)
                         dup2(fd[1], 1);
                     close(fd[0]);
@@ -467,4 +468,5 @@ void cmdProcessing (char ***arr, int *length)
     close(save0);
     close(save1);
 }
+
 //========================================================
