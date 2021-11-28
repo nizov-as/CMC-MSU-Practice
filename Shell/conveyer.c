@@ -40,7 +40,7 @@ int is_redirection(char **arr, int *first_redir_symbol_place);    // на ком
 //функции для создания двумерного массива
 int howMuchElements (List *node);                           // подсчёт числа элементов списка (для корректного выделения памяти)
 char **makeArrayForOneProc (List **node);                   // создание одномерного массива
-char ***makeArrayForConveyer (List **node, int *length);    // создание массива из одномерных массивов
+char ***makeArrayForConveyer (List *node, int *length);    // создание массива из одномерных массивов
 
 // обработка текущей команды
 void cmdProcessing (char ***arr, int *length);
@@ -63,7 +63,7 @@ int main (int argc, char *argv[])
     while (tmp_list != NULL)
     {
         char ***array = NULL;
-        array = makeArrayForConveyer(&tmp_list, &arr_length);
+        array = makeArrayForConveyer(tmp_list, &arr_length);
 
         if(not_only_enter)
         {
@@ -387,13 +387,13 @@ char **makeArrayForOneProc(List **node)
 
 //========================================================
 
-char ***makeArrayForConveyer(List **node, int *length)
+char ***makeArrayForConveyer(List *node, int *length)
 {
-    char ***conveyerArray = (char***)malloc((howMuchElements(*node)) * sizeof(char**));
+    char ***conveyerArray = (char***)malloc((howMuchElements(node)) * sizeof(char**));
     int counter = 0;
-    while (*node)
+    while (node)
     {
-        conveyerArray[counter] = makeArrayForOneProc(node);
+        conveyerArray[counter] = makeArrayForOneProc(&node);
         counter++;
     }
     *length = counter;
