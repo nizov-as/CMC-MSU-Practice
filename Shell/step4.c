@@ -480,7 +480,7 @@ void cmdProcessing (char ***arr, int *length)
                         file = open ("/dev/null", O_RDONLY);    
                         if (file == -1)
                             perror("file didn't open\n");
-                        dup2(file, 0);    // перенаправляем стандартный ввод на файл "/dev/null", чтение из которого сразу дает EOF
+                        dup2(file, 0);    // перенаправляем стандартный ввод на файл "/dev/null", чтение из которого сразу дает EOF 
                         close(file);   
                         signal (SIGINT, SIG_IGN);    // устанавливаем игнорирование сигнала SIGINT (то есть Control+C)
                     }
@@ -504,7 +504,10 @@ void cmdProcessing (char ***arr, int *length)
                 while (wait(NULL) != -1);
         }
         else
-            zombieRemove();
+        {
+            int status, wr;
+            wr = wait(&status);
+        }
     }
     dup2(save0, 0);
     dup2(save1, 1);
