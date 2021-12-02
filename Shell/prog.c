@@ -63,7 +63,6 @@ int main (int argc, char *argv[])
     printf("alexandernizov$ ");
 
     tmp_list = readLine(&not_only_enter); 
-    
     signal (SIGCHLD, zombieRemove);
     while (tmp_list != NULL)
     {
@@ -77,7 +76,6 @@ int main (int argc, char *argv[])
         
         deleteList(tmp_list);
         deleteDoubleArray(array, &arr_length);
-        
         printf("alexandernizov$ ");
         tmp_list = readLine(&not_only_enter);
     }
@@ -458,48 +456,56 @@ void cmdProcessing (char ***arr, int *length)
     }
     else
     {
-        int i = 0;
-        int fd[2];
-        int background_cmd = is_background(arr[i], &background_symbol_place);
-        while (i < *length)
-        {   
-            pipe(fd);
-            pid = fork();
-            //printf("BGD: %d\n", background_cmd);
-            if(!pid)
-            {
-                if (is_redirection(arr[i], &first_redir_symbol_place))
+        pid = fork();
+        if (!pid)
+        {
+            int i = 0;
+            int fd[2];
+            int background_cmd = is_background(arr[i], &background_symbol_place);
+            while (i < *length)
+            {   
+                pipe(fd);
+                pid = fork();
+                //printf("BGD: %d\n", background_cmd);
+                if(!pid)
                 {
-                    arr[i] = redirectionProcessing(arr[i], first_redir_symbol_place);
+                    if (is_redirection(arr[i], &first_redir_symbol_place))
+                    {
+                        arr[i] = redirectionProcessing(arr[i], first_redir_symbol_place);
+                    }
+                    if (background_cmd)
+                    {
+                        arr[i] = backgroundProcessing(arr[i], background_symbol_place);
+                        file = open ("/dev/null", O_RDONLY);    
+                        if (file == -1)
+                            perror("file didn't open\n");
+                        dup2(file, 0);    // перенаправляем стандартный ввод на файл "/dev/null", чтение из которого сразу дает EOF 
+                        close(file);   
+                        signal (SIGINT, SIG_IGN);    // устанавливаем игнорирование сигнала SIGINT (то есть Control+C)
+                    }
+
+                    if (i+1 != *length)
+                        dup2(fd[1], 1);
+                    close(fd[0]);
+                    close(fd[1]);
+                    execvp(arr[i][0], arr[i]);
+                    perror(arr[i][0]);
+                    exit(1);
                 }
                 if (background_cmd)
-                {
-                    arr[i] = backgroundProcessing(arr[i], background_symbol_place);
-                    file = open ("/dev/null", O_RDONLY);    
-                    if (file == -1)
-                        perror("file didn't open\n");
-                    dup2(file, 0);    // перенаправляем стандартный ввод на файл "/dev/null", чтение из которого сразу дает EOF 
-                    close(file);   
-                    signal (SIGINT, SIG_IGN);    // устанавливаем игнорирование сигнала SIGINT (то есть Control+C)
-                }
-
-                if (i+1 != *length)
-                    dup2(fd[1], 1);
+                    printf("background cmd child pid: [%d]\n", pid);
+                else
+                    printf("default cmd child pid: [%d]\n", pid);
+                dup2(fd[0], 0);
                 close(fd[0]);
                 close(fd[1]);
-                execvp(arr[i][0], arr[i]);
-                perror(arr[i][0]);
-                exit(1);
+                i++;
             }
-            if (background_cmd)
-                printf("background cmd child pid: [%d]\n", pid);
-            dup2(fd[0], 0);
-            close(fd[0]);
-            close(fd[1]);
-            i++;
+            if (!background_cmd)
+               while (wait(NULL) != -1);
         }
-        if (!background_cmd)
-            while (wait(NULL) != -1);
+        else
+            wait(NULL);
     }
     dup2(save0, 0);
     dup2(save1, 1);
@@ -516,8 +522,7 @@ void zombieRemove()
     pid = waitpid(-1, &status, WNOHANG);   
     while (pid > 0)
     {
-        if (WIFEXITED(status)) printf ("Command with pid [%d] is done, status: %d\n", pid, status);
-        else printf ("Command with pid [%d] is done, status: error\n", pid);
+        printf ("Command with pid [%d] is done, status: %d\n", pid, status);
         pid = waitpid(-1, &status, WNOHANG);    // WNOHANG: если ни одного процесса-зомби нет, вызов ничего не ждет и цикл прерывается (возвращает 0)
     }
 }
