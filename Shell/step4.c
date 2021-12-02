@@ -440,7 +440,6 @@ void cmdProcessing (char ***arr, int *length)
     int first_redir_symbol_place;
     int background_symbol_place;
     int file;
-    //int status;
     
     if (is_cd(arr[0]))
     {
@@ -494,7 +493,9 @@ void cmdProcessing (char ***arr, int *length)
                     exit(1);
                 }
                 if (background_cmd)
-                    printf("background child pid: [%d]\n", pid);
+                    printf("background cmd child pid: [%d]\n", pid);
+                else
+                    printf("default cmd child pid: [%d]\n", pid);
                 dup2(fd[0], 0);
                 close(fd[0]);
                 close(fd[1]);
@@ -504,10 +505,7 @@ void cmdProcessing (char ***arr, int *length)
                 while (wait(NULL) != -1);
         }
         else
-        {
-            int status, wr;
-            wr = wait(&status);
-        }
+            wait(NULL);
     }
     dup2(save0, 0);
     dup2(save1, 1);
@@ -525,7 +523,7 @@ void zombieRemove()
     while (pid > 0)
     {
         printf ("Command with pid [%d] is done\n", pid);
-        pid = waitpid(-1, &status, WNOHANG);
+        pid = waitpid(-1, &status, WNOHANG);    // WNOHANG: если ни одного процесса-зомби нет, вызов ничего не ждет и цикл прерывается (возвращает 0)
     }
 }
 
