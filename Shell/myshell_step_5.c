@@ -15,7 +15,7 @@ typedef struct _List
 } List;
 
 // добавление слова в список
-List *addWordInList (List *node, char *current_word);
+List *addWordInList(List *node, char *current_word);
 
 // печати:
 void printList(List *node);                       // печать списка
@@ -23,7 +23,7 @@ void printArr(char** arr);                        // печать массива
 void printDoubleArr(char ***arr, int *length);    // печать двумерного массива
 
 // очистка памяти: удаление списка
-void deleteList (List *node);
+void deleteList(List *node);
 
 // очистка памяти: удаление массива
 void deleteArray(char **arr);                        // удаление одномерного массива
@@ -40,22 +40,27 @@ int is_background(char **arr, int *background_symb_place);        // на ком
 int is_two_pipes(char **arr, int *two_pipes_symb_place);          // на команду ||
 int is_two_ampersands(char **arr, int *two_amps_symb_place);      // на команду &&
 int is_sequentially(char **arr, int *sequence_symb_place);        // на команду ;
+int is_pipes_amps_seq(char **arr);                                // на команды ||, && или ;
 
 // функции для создания двумерного массива:
-int howMuchElements (List *node);                          // подсчёт числа элементов списка (для корректного выделения памяти)
-char **makeArrayForOneProc (List **node);                  // создание одномерного массива
-char ***makeArrayForConveyer (List *node, int *length);    // создание массива из одномерных массивов (то есть двумерного массива)
+int howMuchElements(List *node);                          // подсчёт числа элементов списка (для корректного выделения памяти)
+char **makeArrayForOneProc(List **node);                  // создание одномерного массива
+char ***makeArrayForConveyer(List *node, int *length);    // создание массива из одномерных массивов (то есть двумерного массива)
 
 // обработка текущей команды
-void cmdProcessing (char ***arr, int *length);
+void cmdProcessing(char ***arr, int *length);
 
 // обработки команд:
-char **redirectionProcessing(char **arr, int first_redir_symbol_place);                 // перенаправление ввода-вывода
-char **backgroundProcessing(char **arr, int background_symb_place);                     // фоновый режим
-char **twoPipesProcessing(char **arr, int pipes_symbol_place, int *next_cmd_status);    // команда ||
+char **redirectionProcessing(char **arr, int first_redir_symbol_place);    // перенаправление ввода-вывода
+char **backgroundProcessing(char **arr, int background_symb_place);        // фоновый режим
 
 // функция-обработчик сигнала SIGCHLD
 void zombieRemove(int s);
+
+// добавлено в 5 этапе
+int howMuchElements2(char **arr);
+char **makeArrayForCmd(char **arr, int *place);
+char ***makeArrayForAllCmd(char **arr, int *length);
 
 //========================================================
 //========================================================
@@ -70,7 +75,7 @@ int main (int argc, char *argv[])
     tmp_list = readLine(&not_only_enter); 
     // signal (SIGCHLD, zombieRemove);
     while (tmp_list != NULL)
-    {d
+    {
         char ***array = NULL;
         array = makeArrayForConveyer(tmp_list, &arr_length);
         
@@ -349,38 +354,6 @@ int is_two_pipes(char **arr, int *two_pipes_symb_place)
 
 //========================================================
 
-char **twoPipesProcessing(char **arr, int pipes_symbol_place, int *next_cmd_status)
-{
-    *next_cmd_status = 0;
-    
-    pid_t pid1;
-    if ((pid1 = fork()) == -1)
-    {
-        perror("fork call");
-        exit(1);
-    }
-    if (pid1 == 0)
-    {
-        execlp(arr[pipes_symbol_place-1], arr[pipes_symbol_place-1], NULL);
-        perror(arr[pipes_symbol_place-1]);
-        exit(2);
-    }
-    int status1;
-    wait(&status1);
-    if(!WIFEXITED(status1) || WEXITSTATUS(status1))
-    {
-        *next_cmd_status = 1;    // если команда завершилась неудачно, то даём "добро" на выполнение следующей команды в фукнции cmdProcessing
-
-        free(arr[pipes_symbol_place-1]);
-        arr[pipes_symbol_place-1] = NULL;
-        free(arr[pipes_symbol_place]);
-        arr[pipes_symbol_place] = NULL;
-    }
-    return arr;
-}
-
-//========================================================
-
 int is_two_ampersands(char **arr, int *two_amps_symb_place)
 {
     int i = 0;
@@ -408,6 +381,20 @@ int is_sequentially(char **arr, int *sequence_symb_place)
             *sequence_symb_place = i;
             return 1;
         }
+        i++;
+    }
+    return 0;
+}
+
+//========================================================
+
+int is_pipes_amps_seq(char **arr)
+{
+    int i = 0;
+    while (arr[i] != NULL)
+    {
+        if(!strcmp(arr[i], "||") || !strcmp(arr[i], "&&") || !strcmp(arr[i], ";"))
+            return 1;
         i++;
     }
     return 0;
@@ -484,8 +471,6 @@ int howMuchElements(List *node)
 	return counter + 1;
 }
 
-//========================================================
-
 char **makeArrayForOneProc(List **node)
 {
     int i = 0;
@@ -504,8 +489,6 @@ char **makeArrayForOneProc(List **node)
     return new_arr;
 }
 
-//========================================================
-
 char ***makeArrayForConveyer(List *node, int *length)
 {
     char ***conveyerArray = (char***)malloc((howMuchElements(node)) * sizeof(char**));
@@ -521,6 +504,51 @@ char ***makeArrayForConveyer(List *node, int *length)
 
 //========================================================
 
+int howMuchElements2(char **arr)
+{
+	int i = 0;
+	while ((arr[i] != NULL) && strcmp(arr[i], "|"))
+	{
+		if (!strcmp(arr[i], "||") || !strcmp(arr[i], "&&") || !strcmp(arr[i], ";"))
+			i++;
+	}	
+	return i + 1;
+}
+
+char **makeArrayForCmd(char **arr, int *place)
+{
+    int i = 0;
+    char **new_arr = NULL;
+    while ((arr[*place] != NULL) && strcmp(arr[*place], "|") && strcmp(arr[*place], "||") && strcmp(arr[*place], "&&") && strcmp(arr[*place], ";"))
+    {
+        new_arr = (char**)realloc(new_arr, (i + 2) * sizeof(char*));
+        new_arr[i] = (char*)malloc((strlen(arr[*place]) + 1) * sizeof(char));
+        strcpy(new_arr[i], arr[*place]);
+        i++;
+        (*place)++;
+    }
+    if (arr[*place] != NULL) (*place)++;
+
+    new_arr[i] = NULL;
+    return new_arr;
+}
+
+char ***makeArrayForAllCmd(char **arr, int *length)
+{
+    int place = 0;
+    char ***AllCmdArray = (char***)malloc((howMuchElements2(arr)) * sizeof(char**));
+    int counter = 0;
+    while (arr[place] != NULL)
+    {
+        AllCmdArray[counter] = makeArrayForCmd(arr, &place);
+        counter++;
+    }
+    *length = counter; 
+    return AllCmdArray;
+}
+
+//========================================================
+
 void cmdProcessing (char ***arr, int *length)
 {
     int save0 = dup(0);
@@ -528,10 +556,9 @@ void cmdProcessing (char ***arr, int *length)
     pid_t pid;
     int first_redir_symbol_place;
     int background_symbol_place;
-    int pipes_symbol_place;
-    int next_cmd_pipes_ok = 0;
     int file;
-    int normal_cmd = 1;
+
+    int cmd_count = 0;
     
     if (is_cd(arr[0]))
     {
@@ -575,31 +602,61 @@ void cmdProcessing (char ***arr, int *length)
                         signal (SIGINT, SIG_IGN);    // устанавливаем игнорирование сигнала SIGINT (то есть Control+C)
                     }
 
-                    if (is_two_pipes(arr[i], &pipes_symbol_place))
-                    {
-                        normal_cmd = 0;
-                        arr[i] = twoPipesProcessing(arr[i], pipes_symbol_place, &next_cmd_pipes_ok);
-                    }
-
                     if (i+1 != *length)
                         dup2(fd[1], 1);
                     close(fd[0]);
                     close(fd[1]);
-
-                    printf ("next_cmd_pipes_ok: %d\n", next_cmd_pipes_ok);
-                    if (next_cmd_pipes_ok)
+                    
+                    if (is_pipes_amps_seq(arr[i]))    // если это команда ||, && или ; то формируем новый двумерный массив с командами под текущий пайп
                     {
-                        execlp(arr[i][pipes_symbol_place+1], arr[i][pipes_symbol_place+1], NULL);
-                        perror(arr[i][pipes_symbol_place+1]);
-                        exit(1);
+                        char ***cmd_arr = NULL;
+                        cmd_arr = makeArrayForAllCmd(arr[i], &cmd_count);
+                        int j = 0;
+                        int cmd_num = 0;
+                        while (arr[i][j] != NULL)
+                        {
+                            if (!strcmp(arr[i][j], "||"))
+                            {
+                                pid_t pid1, pid2;
+                                if ((pid1 = fork()) == -1)
+                                {
+                                    perror("fork call");
+                                    exit(1);
+                                }
+                                if (pid1 == 0)
+                                {
+                                    execvp(cmd_arr[cmd_num][0], cmd_arr[cmd_num]);
+                                    perror(cmd_arr[cmd_num][0]);
+                                    exit(2);
+                                }
+                                int status1;
+                                wait(&status1);
+                                if(!WIFEXITED(status1) || WEXITSTATUS(status1))
+                                {
+                                    if ((pid2 = fork()) == -1)
+                                    {
+                                        perror("fork call");
+                                        exit(3);
+                                    }
+                                    if (pid2 == 0)
+                                    {
+                                        execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
+                                        perror(cmd_arr[cmd_num+1][0]);
+                                        exit(4);                                    
+                                    }
+                                    wait(NULL);                               
+                                }
+                            }
+                        cmd_num ++;
+                        deleteDoubleArray(cmd_arr, &cmd_count);
+                        }
                     }
-                    else if (normal_cmd)
+                    else    // иначе перед нами стандартная команда в пайпе (то есть без всяких &&, ||, ;)
                     {
                         execvp(arr[i][0], arr[i]);
                         perror(arr[i][0]);
                         exit(1);
                     }
-                    else break;
                 }
                 if (background_cmd)
                     printf("background child pid: [%d]\n", pid);
@@ -610,8 +667,6 @@ void cmdProcessing (char ***arr, int *length)
             }
             if (!background_cmd)
                 while (wait(NULL) != -1);
-            else
-                signal(SIGUSR1, zombieRemove);
         }
         else
         {
@@ -646,7 +701,7 @@ void zombieRemove(int s)
 		}
 		else if (WIFSTOPPED(status))    // WIFSTOPPED - дочерний процесс, из-за которого функция вернула управление, в настоящий момент остановлен
 		{
-			printf("Process [%d] stopped by signal %d\n", pid, WSTOPSIG(status)); // WSTOPSIG возвращает номер сигнала, из-за которого дочерний процесс был остановлен
+			printf("Process [%d] stopped by signal %d\n", pid, WSTOPSIG(status));    // WSTOPSIG возвращает номер сигнала, из-за которого дочерний процесс был остановлен
 		} 
     } 
 }
