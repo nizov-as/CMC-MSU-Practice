@@ -611,26 +611,29 @@ void cmdProcessing (char ***arr, int *length)
                     {
                         char ***cmd_arr = NULL;
                         cmd_arr = makeArrayForAllCmd(arr[i], &cmd_count);
+                        printDoubleArr(cmd_arr, &cmd_count);
                         int j = 0;
                         int cmd_num = 0;
+
+                        pid_t pid1, pid2;
+                        if ((pid1 = fork()) == -1)
+                        {
+                            perror("fork call");
+                            exit(1);
+                        }
+                        if (pid1 == 0)
+                        {
+                            execvp(cmd_arr[cmd_num][0], cmd_arr[cmd_num]);
+                            perror(cmd_arr[cmd_num][0]);
+                            exit(2);
+                        }
+                        int status1;
+                        wait(&status1);
+
                         while (arr[i][j] != NULL)
                         {
                             if (!strcmp(arr[i][j], "||"))
                             {
-                                pid_t pid1, pid2;
-                                if ((pid1 = fork()) == -1)
-                                {
-                                    perror("fork call");
-                                    exit(1);
-                                }
-                                if (pid1 == 0)
-                                {
-                                    execvp(cmd_arr[cmd_num][0], cmd_arr[cmd_num]);
-                                    perror(cmd_arr[cmd_num][0]);
-                                    exit(2);
-                                }
-                                int status1;
-                                wait(&status1);
                                 if(!WIFEXITED(status1) || WEXITSTATUS(status1))
                                 {
                                     if ((pid2 = fork()) == -1)
@@ -644,12 +647,14 @@ void cmdProcessing (char ***arr, int *length)
                                         perror(cmd_arr[cmd_num+1][0]);
                                         exit(4);                                    
                                     }
-                                    wait(NULL);                               
+                                    int status1;
+                                    wait(&status1);                               
                                 }
+                            cmd_num++;
                             }
-                        cmd_num ++;
-                        deleteDoubleArray(cmd_arr, &cmd_count);
+                        j++;
                         }
+                    deleteDoubleArray(cmd_arr, &cmd_count);
                     }
                     else    // иначе перед нами стандартная команда в пайпе (то есть без всяких &&, ||, ;)
                     {
