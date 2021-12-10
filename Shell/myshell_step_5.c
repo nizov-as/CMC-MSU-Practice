@@ -37,9 +37,6 @@ int is_cd(char **arr);                                            // на ком
 int is_exit(char **arr);                                          // на команду exit
 int is_redirection(char **arr, int *first_redir_symbol_place);    // на команду перенаправления ввода/вывода
 int is_background(char **arr, int *background_symb_place);        // на команду запуска в фоновом режиме
-int is_two_pipes(char **arr, int *two_pipes_symb_place);          // на команду ||
-int is_two_ampersands(char **arr, int *two_amps_symb_place);      // на команду &&
-int is_sequentially(char **arr, int *sequence_symb_place);        // на команду ;
 int is_pipes_amps_seq(char **arr);                                // на команды ||, && или ;
 
 // функции для создания двумерного массива:
@@ -337,57 +334,6 @@ int is_background(char **arr, int *background_symb_place)
 
 //========================================================
 
-int is_two_pipes(char **arr, int *two_pipes_symb_place)
-{
-    int i = 0;
-    while (arr[i] != NULL)
-    {
-        if (!strcmp(arr[i], "||"))
-        {
-            *two_pipes_symb_place = i;
-            return 1;
-        }
-        i++;
-    }
-    return 0;
-}
-
-//========================================================
-
-int is_two_ampersands(char **arr, int *two_amps_symb_place)
-{
-    int i = 0;
-    while (arr[i] != NULL)
-    {
-        if (!strcmp(arr[i], "&&"))
-        {
-            *two_amps_symb_place = i;
-            return 1;
-        }
-        i++;
-    }
-    return 0;
-}
-
-//========================================================
-
-int is_sequentially(char **arr, int *sequence_symb_place)
-{
-    int i = 0;
-    while (arr[i] != NULL)
-    {
-        if (!strcmp(arr[i], ";"))
-        {
-            *sequence_symb_place = i;
-            return 1;
-        }
-        i++;
-    }
-    return 0;
-}
-
-//========================================================
-
 int is_pipes_amps_seq(char **arr)
 {
     int i = 0;
@@ -506,16 +452,19 @@ char ***makeArrayForConveyer(List *node, int *length)
 
 int howMuchElements2(char **arr)
 {
-	int i = 0;
-	while ((arr[i] != NULL) && strcmp(arr[i], "|"))
+	int count = 0;
+    int j = 0;
+	while (arr[j] != NULL)
 	{
-		if (!strcmp(arr[i], "||") || !strcmp(arr[i], "&&") || !strcmp(arr[i], ";"))
+		if (!strcmp(arr[j], "||") || !strcmp(arr[j], "&&") || !strcmp(arr[j], ";"))
         {
-            i++;
-            printf("found ebala\n");
+            count++;
+            j++;
         }
+        else
+            j++;
 	}	
-	return i + 1;
+	return count + 1;
 }
 
 char **makeArrayForCmd(char **arr, int *place)
@@ -539,7 +488,7 @@ char **makeArrayForCmd(char **arr, int *place)
 char ***makeArrayForAllCmd(char **arr, int *length)
 {
     int place = 0;
-    char ***AllCmdArray = (char***)malloc((5) * sizeof(char**));
+    char ***AllCmdArray = (char***)malloc((howMuchElements2(arr)) * sizeof(char**));
     int counter = 0;
     while (arr[place] != NULL)
     {
@@ -559,7 +508,6 @@ void cmdProcessing (char ***arr, int *length)
     pid_t pid;
     int first_redir_symbol_place;
     int background_symbol_place;
-    int file;
 
     int cmd_count = 0;
     
@@ -590,32 +538,23 @@ void cmdProcessing (char ***arr, int *length)
                 pid = fork();
                 if(!pid)
                 {
-                    if (is_redirection(arr[i], &first_redir_symbol_place))
+                    if (!is_pipes_amps_seq(arr[i]) && is_redirection(arr[i], &first_redir_symbol_place))
                     {
                         arr[i] = redirectionProcessing(arr[i], first_redir_symbol_place);
                     }
-                    if (background_cmd)
-                    {
-                        arr[i] = backgroundProcessing(arr[i], background_symbol_place);
-                        file = open ("/dev/null", O_RDONLY);    
-                        if (file == -1)
-                            perror("file didn't open\n");
-                        dup2(file, 0);    // перенаправляем стандартный ввод на файл "/dev/null", чтение из которого сразу дает EOF 
-                        close(file);   
-                        signal (SIGINT, SIG_IGN);    // устанавливаем игнорирование сигнала SIGINT (то есть Control+C)
-                    }
-
-                    if (i+1 != *length)
-                        dup2(fd[1], 1);
-                    close(fd[0]);
-                    close(fd[1]);
-                    
+                   
                     if (is_pipes_amps_seq(arr[i]))    // если это команда ||, && или ; то формируем новый двумерный массив с командами под текущий пайп
                     { 
+                        int done = 0;
                         char ***cmd_arr = NULL;
                         cmd_arr = makeArrayForAllCmd(arr[i], &cmd_count);
                         int j = 0;
                         int cmd_num = 0;
+
+                        if (is_redirection(cmd_arr[cmd_num], &first_redir_symbol_place))
+                        {
+                            cmd_arr[cmd_num] = redirectionProcessing(cmd_arr[cmd_num], first_redir_symbol_place);
+                        }
 
                         pid_t pid1;
                         if ((pid1 = fork()) == -1)
@@ -632,8 +571,12 @@ void cmdProcessing (char ***arr, int *length)
                         int status1;
                         wait(&status1);
 
-                        while (arr[i][j] != NULL)                                // ls && wtf || ls
+                        while (arr[i][j] != NULL)
                         {
+                            if (is_redirection(cmd_arr[cmd_num+1], &first_redir_symbol_place))
+                            {
+                                cmd_arr[cmd_num+1] = redirectionProcessing(cmd_arr[cmd_num+1], first_redir_symbol_place);
+                            }
                             if (!strcmp(arr[i][j], "||"))
                             {
                                 if(!WIFEXITED(status1) || WEXITSTATUS(status1))
@@ -645,13 +588,20 @@ void cmdProcessing (char ***arr, int *length)
                                     }
                                     if (pid1 == 0)
                                     {
+                                        if (done == (cmd_count-2))
+                                        {
+                                            if (i+1 != *length)
+                                                dup2(fd[1], 1);
+                                            close(fd[0]);
+                                            close(fd[1]);                                
+                                        }
                                         execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
                                         perror(cmd_arr[cmd_num+1][0]);
                                         exit(4);                                    
                                     }
-                                    int status1;
                                     wait(&status1);                               
                                 }
+                                done++;
                                 cmd_num++;
                             }
                             else if (!strcmp(arr[i][j], "&&"))
@@ -665,13 +615,20 @@ void cmdProcessing (char ***arr, int *length)
                                     }
                                     if (pid1 == 0)
                                     {
+                                        if (done == (cmd_count-2))
+                                        {
+                                            if (i+1 != *length)
+                                                dup2(fd[1], 1);
+                                            close(fd[0]);
+                                            close(fd[1]);                                
+                                        }
                                         execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
                                         perror(cmd_arr[cmd_num+1][0]);
                                         exit(6);                                    
                                     }
-                                    int status1;
                                     wait(&status1);                               
                                 }
+                                done++;
                                 cmd_num++;
                             }
                             else if (!strcmp(arr[i][j], ";"))
@@ -683,13 +640,20 @@ void cmdProcessing (char ***arr, int *length)
                                 }
                                 if (pid1 == 0)
                                 {
+                                    if (done == (cmd_count-2))
+                                    {
+                                        if (i+1 != *length)
+                                            dup2(fd[1], 1);
+                                        close(fd[0]);
+                                        close(fd[1]);                                
+                                    }
                                     execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
                                     perror(cmd_arr[cmd_num+1][0]);
                                     exit(8);                                    
                                 }
-                                int status1;
                                 wait(&status1); 
                                 cmd_num++;
+                                done++;
                             }
                             j++;
                         }
@@ -697,6 +661,10 @@ void cmdProcessing (char ***arr, int *length)
                     }
                     else    // иначе перед нами стандартная команда в пайпе (то есть без всяких &&, ||, ;)
                     {
+                        if (i+1 != *length)
+                            dup2(fd[1], 1);
+                        close(fd[0]);
+                        close(fd[1]);
                         execvp(arr[i][0], arr[i]);
                         perror(arr[i][0]);
                         exit(1);
@@ -714,8 +682,8 @@ void cmdProcessing (char ***arr, int *length)
         }
         else
         {
-            int status, wr;
-            wr = wait(&status);
+            int status;
+            wait(&status);
         }
     }
     dup2(save0, 0);
