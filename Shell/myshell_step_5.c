@@ -611,7 +611,7 @@ void cmdProcessing (char ***arr, int *length)
                     close(fd[1]);
                     
                     if (is_pipes_amps_seq(arr[i]))    // если это команда ||, && или ; то формируем новый двумерный массив с командами под текущий пайп
-                    {
+                    { 
                         char ***cmd_arr = NULL;
                         cmd_arr = makeArrayForAllCmd(arr[i], &cmd_count);
                         int j = 0;
@@ -632,7 +632,7 @@ void cmdProcessing (char ***arr, int *length)
                         int status1;
                         wait(&status1);
 
-                        while (arr[i][j] != NULL)
+                        while (arr[i][j] != NULL)                                // ls && wtf || ls
                         {
                             if (!strcmp(arr[i][j], "||"))
                             {
@@ -652,7 +652,44 @@ void cmdProcessing (char ***arr, int *length)
                                     int status1;
                                     wait(&status1);                               
                                 }
-                            cmd_num++;
+                                cmd_num++;
+                            }
+                            else if (!strcmp(arr[i][j], "&&"))
+                            {
+                                if(WIFEXITED(status1) && !WEXITSTATUS(status1))
+                                {
+                                    if ((pid1 = fork()) == -1)
+                                    {
+                                        perror("fork call");
+                                        exit(5);
+                                    }
+                                    if (pid1 == 0)
+                                    {
+                                        execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
+                                        perror(cmd_arr[cmd_num+1][0]);
+                                        exit(6);                                    
+                                    }
+                                    int status1;
+                                    wait(&status1);                               
+                                }
+                                cmd_num++;
+                            }
+                            else if (!strcmp(arr[i][j], ";"))
+                            {
+                                if ((pid1 = fork()) == -1)
+                                {
+                                    perror("fork call");
+                                    exit(7);
+                                }
+                                if (pid1 == 0)
+                                {
+                                    execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
+                                    perror(cmd_arr[cmd_num+1][0]);
+                                    exit(8);                                    
+                                }
+                                int status1;
+                                wait(&status1); 
+                                cmd_num++;
                             }
                             j++;
                         }
