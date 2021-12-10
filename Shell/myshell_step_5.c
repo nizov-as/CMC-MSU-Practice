@@ -510,7 +510,10 @@ int howMuchElements2(char **arr)
 	while ((arr[i] != NULL) && strcmp(arr[i], "|"))
 	{
 		if (!strcmp(arr[i], "||") || !strcmp(arr[i], "&&") || !strcmp(arr[i], ";"))
-			i++;
+        {
+            i++;
+            printf("found ebala\n");
+        }
 	}	
 	return i + 1;
 }
@@ -536,7 +539,7 @@ char **makeArrayForCmd(char **arr, int *place)
 char ***makeArrayForAllCmd(char **arr, int *length)
 {
     int place = 0;
-    char ***AllCmdArray = (char***)malloc((howMuchElements2(arr)) * sizeof(char**));
+    char ***AllCmdArray = (char***)malloc((5) * sizeof(char**));
     int counter = 0;
     while (arr[place] != NULL)
     {
@@ -611,11 +614,10 @@ void cmdProcessing (char ***arr, int *length)
                     {
                         char ***cmd_arr = NULL;
                         cmd_arr = makeArrayForAllCmd(arr[i], &cmd_count);
-                        printDoubleArr(cmd_arr, &cmd_count);
                         int j = 0;
                         int cmd_num = 0;
 
-                        pid_t pid1, pid2;
+                        pid_t pid1;
                         if ((pid1 = fork()) == -1)
                         {
                             perror("fork call");
@@ -636,12 +638,12 @@ void cmdProcessing (char ***arr, int *length)
                             {
                                 if(!WIFEXITED(status1) || WEXITSTATUS(status1))
                                 {
-                                    if ((pid2 = fork()) == -1)
+                                    if ((pid1 = fork()) == -1)
                                     {
                                         perror("fork call");
                                         exit(3);
                                     }
-                                    if (pid2 == 0)
+                                    if (pid1 == 0)
                                     {
                                         execvp(cmd_arr[cmd_num+1][0], cmd_arr[cmd_num+1]);
                                         perror(cmd_arr[cmd_num+1][0]);
@@ -652,9 +654,9 @@ void cmdProcessing (char ***arr, int *length)
                                 }
                             cmd_num++;
                             }
-                        j++;
+                            j++;
                         }
-                    deleteDoubleArray(cmd_arr, &cmd_count);
+                        deleteDoubleArray(cmd_arr, &cmd_count);
                     }
                     else    // иначе перед нами стандартная команда в пайпе (то есть без всяких &&, ||, ;)
                     {
