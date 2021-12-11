@@ -39,7 +39,7 @@ int is_redirection(char **arr, int *first_redir_symbol_place);    // на ком
 int is_background(char **arr, int *background_symb_place);        // на команду запуска в фоновом режиме
 int is_pipes_amps_seq(char **arr);                                // на команды ||, && или ;
 
-// функции для создания двумерного массива:
+// функции для создания двумерного массива из списка
 int howMuchElements(List *node);                          // подсчёт числа элементов списка (для корректного выделения памяти)
 char **makeArrayForOneProc(List **node);                  // создание одномерного массива
 char ***makeArrayForConveyer(List *node, int *length);    // создание массива из одномерных массивов (то есть двумерного массива)
@@ -54,7 +54,7 @@ char **backgroundProcessing(char **arr, int background_symb_place);        // ф
 // функция-обработчик сигнала SIGCHLD
 void zombieRemove(int s);
 
-// добавлено в 5 этапе
+// функции для создания двумерного массива из массива (для работы с командами || && ;)
 int howMuchElements2(char **arr);
 char **makeArrayForCmd(char **arr, int *place);
 char ***makeArrayForAllCmd(char **arr, int *length);
@@ -70,7 +70,7 @@ int main (int argc, char *argv[])
     printf("alexandernizov$ ");
 
     tmp_list = readLine(&not_only_enter); 
-    // signal (SIGCHLD, zombieRemove);
+    //signal (SIGCHLD, zombieRemove);
     while (tmp_list != NULL)
     {
         char ***array = NULL;
@@ -508,6 +508,7 @@ void cmdProcessing (char ***arr, int *length)
     pid_t pid;
     int first_redir_symbol_place;
     int background_symbol_place;
+    int file;
 
     int cmd_count = 0;
     
@@ -541,6 +542,17 @@ void cmdProcessing (char ***arr, int *length)
                     if (!is_pipes_amps_seq(arr[i]) && is_redirection(arr[i], &first_redir_symbol_place))
                     {
                         arr[i] = redirectionProcessing(arr[i], first_redir_symbol_place);
+                    }
+
+                    if (background_cmd)
+                    {
+                        arr[i] = backgroundProcessing(arr[i], background_symbol_place);
+                        file = open("dev/null", O_RDONLY);
+                        if (file == -1)
+                            perror("file didn't open");
+                        dup2(file, 0);
+                        close(file);
+                        signal(SIGINT, SIG_IGN);
                     }
                    
                     if (is_pipes_amps_seq(arr[i]))    // если это команда ||, && или ; то формируем новый двумерный массив с командами под текущий пайп
