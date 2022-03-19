@@ -173,46 +173,71 @@ ostream &operator<<(ostream &s, const Polynom &c)
     
     if (n != 0)
     {
-        if (c.koef[c.n] != 0)
-            s << c.koef[c.n] << "x^" << c.n;   
-
-        for (i = (c.n-1); i >= 2; i--)
+        if (c.n > 1)
         {
-            if (c.koef[i] != 0)
+            if (c.koef[c.n] != 0)
             {
-                if (c.koef[i] < 0)
+                if (c.koef[c.n] < 0)
                 {
-                    if (c.koef[i] != -1)
-                        s << c.koef[i] << "x^" << i;
+                    if (c.koef[c.n] != -1)
+                        s << c.koef[c.n] << "x^" << c.n;
                     else
-                        s << "-x^" << i;
+                        s << "-x^" << c.n;
                 }
                 else
                 {
-                    if (c.koef[i] != 1)
-                        s << "+" << c.koef[i] << "x^" << i;
+                    if (c.koef[c.n] != 1)
+                        s << c.koef[c.n] << "x^" << c.n;
                     else
-                        s << "+x^" << i;
+                        s << "x^" << c.n;                
+                }
+
+            }
+            for (i = (c.n-1); i >= 2; i--)
+            {
+                if (c.koef[i] != 0)
+                {
+                    if (c.koef[i] < 0)
+                    {
+                        if (c.koef[i] != -1)
+                            s << c.koef[i] << "x^" << i;
+                        else
+                            s << "-x^" << i;
+                    }
+                    else
+                    {
+                        if (c.koef[i] != 1)
+                            s << "+" << c.koef[i] << "x^" << i;
+                        else
+                            s << "+x^" << i;
+                    }
                 }
             }
         }
         if (c.koef[1] != 0)
         {
-            if (c.koef[i] != 0)
+            if (c.koef[1] < 0)
             {
-                if (c.koef[i] < 0)
+                if (c.koef[1] != -1)
+                    s << c.koef[1] << "x";
+                else
+                    s << "-x";
+            }
+            else
+            {
+                if (c.n != 1)
                 {
-                    if (c.koef[i] != -1)
-                        s << c.koef[i] << "x";
+                    if (c.koef[1] != 1)
+                        s << "+" << c.koef[1] << "x";
                     else
-                        s << "-x";
+                        s << "+x";
                 }
                 else
                 {
-                    if (c.koef[i] != 1)
-                        s << "+" << c.koef[i] << "x";
+                    if (c.koef[1] != 1)
+                        s << c.koef[1] << "x";
                     else
-                        s << "+x";
+                        s << "x";                   
                 }
             }
         }
