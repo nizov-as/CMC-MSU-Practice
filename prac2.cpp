@@ -193,7 +193,7 @@ int main()
 
     cout << "Checking the '()' operation. Let's change the cost of the Sofa by 75000₽ and print it out: " << endl;
     Sofa1(75000);
-    cout << Table1 << endl;
+    cout << Sofa1 << endl;
  
     return 0;
 }
