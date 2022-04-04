@@ -89,19 +89,23 @@ class EurFurniture : public Furniture
 public:
 
     char* GetCountry() const { return country_name; }
+    void SetCountry(const char *cn)
+    {
+        delete [] country_name;
+        country_name = new char [strlen(cn) + 1];
+        strcpy (country_name, cn);
+    }
 
-    EurFurniture(const char *fn, double rp, double wd, const char *cn, double er) : Furniture(fn, rp, wd) 
+    EurFurniture(const char *fn, double rp, double wd, const char *cn) : Furniture(fn, rp, wd) 
     {
         country_name = new char [strlen(cn) + 1];
         strcpy (country_name, cn);
-        euro_rate = er;
     }
 
     EurFurniture(const EurFurniture &obj) : Furniture(obj.GetFurName(), obj.GetRetPrice(), obj.GetDiscount())
     {
-        country_name = new char [strlen(obj.country_name)+1];
-        strcpy(country_name, obj.country_name);
-        euro_rate = obj.euro_rate;
+        country_name = new char [strlen(obj.GetCountry())+1];
+        strcpy(country_name, obj.GetCountry());
     }
 
     ~EurFurniture() { delete [] country_name; }
@@ -111,11 +115,8 @@ public:
         this->SetFurName(obj.GetFurName());
         this->SetRetPrice(obj.GetRetPrice());
         this->SetDiscount(obj.GetDiscount());
+        this->SetCountry(obj.GetCountry());
 
-        delete [] country_name;
-        country_name = new char [strlen(obj.country_name) + 1];
-        strcpy (country_name, obj.country_name);
-        euro_rate = obj.euro_rate;
         return *this;
     }
 
@@ -178,7 +179,7 @@ int main()
     RusFurniture Sofa1("Sofa", 50000, 0.1);
     cout << Sofa1 << endl;
 
-    EurFurniture Sofa2("Sofa", 1000, 0.1, "Germany", 95);
+    EurFurniture Sofa2("Sofa", 1000, 0.1, "Germany");
     cout << Sofa2 << endl;
 
     cout << "Checking the assignment operation. Let's create a new table: " << endl;
