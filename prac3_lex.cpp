@@ -20,7 +20,6 @@ const char * TW[] = {
 };
 
 const char * TD[] = {
-    "", 
     ";", ",", ":", ".", "(", 
     ")", "{", "}", 
     "=", "==", "<", ">", "+", 
@@ -40,8 +39,7 @@ enum LexType {
     LEX_TRUE,
     LEX_WHILE, LEX_WRITE,
     LEX_AND, LEX_OR, LEX_NOT,
-    // TD
-    TD_ZERO,                                                                                     
+    // TD                                                                                    
     LEX_SEMICOLON, LEX_COMMA, LEX_COLON, LEX_DOT, LEX_LPAREN,
     LEX_RPAREN, LEX_BEGIN, LEX_END,             
     LEX_EQ, LEX_DEQ, LEX_LSS, LEX_GTR, LEX_PLUS,
@@ -109,9 +107,9 @@ ostream& operator<< (ostream &out, Lex l)
         type = (string)TW[l.l_type];
         type_of_table = "TW: ";
     }
-    else if ((l.l_type <= LEX_GEQ) && (l.l_type >= TD_ZERO))
+    else if ((l.l_type <= LEX_GEQ) && (l.l_type >= LEX_SEMICOLON))
     {
-        type = (string)TD[l.l_type - TD_ZERO];
+        type = (string)TD[l.l_type - LEX_SEMICOLON];
         type_of_table = "TD: ";
     }
     else if (l.l_type == LEX_NUMB)
@@ -123,7 +121,7 @@ ostream& operator<< (ostream &out, Lex l)
     if (l.l_type == LEX_ID)
     {
         type = TID[l.l_value].GetName();
-        out  << " < " << type << " | " << "TID: " << l.l_value  << " > " <<  "\n";
+        out << " < " << type << " | " << "TID: " << l.l_value  << " > " <<  "\n";
     }
     else if (l.l_type == LEX_STR_CONST)
     {
@@ -167,7 +165,7 @@ public:
             exit(1);
         }
         cin.rdbuf(file.rdbuf());
-    }
+    } 
 
     Lex GetLex()
     {
@@ -231,14 +229,14 @@ public:
                     {
                         str.push_back(c);
                         j = find(str, TD);
-                        return(Lex((LexType)(j + (int)TD_ZERO), j));
+                        return(Lex((LexType)(j + (int)LEX_SEMICOLON), j));
                     }
                     break;  
                 case IDENT:
                     if (isalpha(c) || isdigit(c))
                     {
                         str.push_back(c);
-                    }          
+                    }        
                     else
                     {
                         read_flag = 0;
@@ -271,13 +269,13 @@ public:
                     {
                         str.push_back(c);
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     else
                     {
                         read_flag = 0;
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     break;     
                 case MINUS:
@@ -285,19 +283,19 @@ public:
                     {
                         str.push_back(c);
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     else
                     {
                         read_flag = 0;
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     break;
                 case MUL_PER:
                     read_flag = 0;
                     j = find(str, TD);
-                    return Lex((LexType)(j + (int)TD_ZERO), j);
+                    return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     break;      
                 case QUOTE:
                     if (c == '"')
@@ -318,7 +316,7 @@ public:
                     {
                         read_flag = 0;
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     break;
                 case COM:
@@ -335,13 +333,14 @@ public:
                     if (c == '=')
                     {
                         str.push_back(c);
-                        CS = DOUBLE_OP2;
+                        j = find(str, TD);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j); 
                     }  
                     else
                     {
                         read_flag = 0;
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     break;
                 case DOUBLE_OP2: 
@@ -349,13 +348,13 @@ public:
                     {
                         str.push_back(c);
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);            
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);            
                     }   
                     else
                     {
                         read_flag = 0;
                         j = find(str, TD);
-                        return Lex((LexType)(j + (int)TD_ZERO), j);                       
+                        return Lex((LexType)(j + (int)LEX_SEMICOLON), j);                       
                     }    
                     break;    
             }
