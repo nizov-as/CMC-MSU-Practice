@@ -39,7 +39,7 @@ enum LexType {
     LEX_TRUE,
     LEX_WHILE, LEX_WRITE,
     LEX_AND, LEX_OR, LEX_NOT,
-    // TD                                                                                    
+    // TD                                                                                  
     LEX_SEMICOLON, LEX_COMMA, LEX_COLON, LEX_DOT, LEX_LPAREN,
     LEX_RPAREN, LEX_BEGIN, LEX_END,             
     LEX_EQ, LEX_DEQ, LEX_LSS, LEX_GTR, LEX_PLUS,
@@ -177,7 +177,7 @@ public:
             switch(CS)
             {
                 case H:
-                    if ( c == ' ' || c == '\n' || c == '\r' || c == '\t' ) ;
+                    if ( c == ' ' || c == '\n' || c == '\t' ) ;
                     else if (isalpha(c))
                     {
                         str.push_back(c);
@@ -222,7 +222,7 @@ public:
                     {
                         CS = QUOTE;
                     }
-                    else 
+                    else
                     {
                         str.push_back(c);
                         j = find(str, TD);
