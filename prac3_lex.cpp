@@ -135,7 +135,6 @@ ostream& operator<< (ostream &out, Lex l)
 
 class Scanner 
 {
-    int read_flag;
     char c;
     char gc() 
     { 
@@ -169,14 +168,12 @@ public:
 
     Lex GetLex()
     {
-        read_flag = 1;
         int dig, j;
         state CS = H;
         string str;
         do
         {
-            if (read_flag) gc(); 
-            else read_flag = 1;
+            gc();
             switch(CS)
             {
                 case H:
@@ -239,7 +236,6 @@ public:
                     }        
                     else
                     {
-                        read_flag = 0;
                         if ((j = find(str, TW)))
                         {
                             return Lex((LexType)j, j);
@@ -260,7 +256,6 @@ public:
                         throw c;
                     else
                     {
-                        read_flag = 0;
                         return Lex(LEX_NUMB, dig);
                     }
                     break;
@@ -273,7 +268,6 @@ public:
                     }
                     else
                     {
-                        read_flag = 0;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -287,13 +281,11 @@ public:
                     }
                     else
                     {
-                        read_flag = 0;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
                     break;
                 case MUL_PER:
-                    read_flag = 0;
                     j = find(str, TD);
                     return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     break;      
@@ -314,7 +306,6 @@ public:
                     }
                     else
                     {
-                        read_flag = 0;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -338,7 +329,6 @@ public:
                     }  
                     else
                     {
-                        read_flag = 0;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -352,7 +342,6 @@ public:
                     }   
                     else
                     {
-                        read_flag = 0;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);                       
                     }    
