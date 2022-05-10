@@ -136,6 +136,7 @@ ostream& operator<< (ostream &out, Lex l)
 class Scanner 
 {
     char c;
+    bool flag = true;
     char gc() 
     { 
         cin.read(&c, 1);
@@ -173,11 +174,11 @@ public:
         string str;
         do
         {
-            gc();
+            if (flag) gc(); else flag = true;
             switch(CS)
             {
                 case H:
-                    if ( c == ' ' || c == '\n' || c == '\t' ) ;
+                    if ( c == ' ' || c == '\n' || c == '\r' || c == '\t' ) ;
                     else if (isalpha(c))
                     {
                         str.push_back(c);
@@ -236,6 +237,7 @@ public:
                     }        
                     else
                     {
+                        flag = false;
                         if ((j = find(str, TW)))
                         {
                             return Lex((LexType)j, j);
@@ -256,6 +258,7 @@ public:
                         throw c;
                     else
                     {
+                        flag = false;
                         return Lex(LEX_NUMB, dig);
                     }
                     break;
@@ -268,6 +271,7 @@ public:
                     }
                     else
                     {
+                        flag = false;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -281,6 +285,7 @@ public:
                     }
                     else
                     {
+                        flag = false;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -306,6 +311,7 @@ public:
                     }
                     else
                     {
+                        flag = false;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -329,6 +335,7 @@ public:
                     }  
                     else
                     {
+                        flag = false;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);
                     }
@@ -342,6 +349,7 @@ public:
                     }   
                     else
                     {
+                        flag = false;
                         j = find(str, TD);
                         return Lex((LexType)(j + (int)LEX_SEMICOLON), j);                       
                     }    
@@ -368,7 +376,7 @@ int main(int argc, char** argv)
         try { a = A.GetLex(); }
         catch (char c)
         { 
-            cout << "ERROR: " << c << "\n";
+            cout << "ERROR: wrong NUM, extra character: " << c << "\n";
         }
         cout << a;
     }
