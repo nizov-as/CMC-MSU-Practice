@@ -654,9 +654,7 @@ void Parser::D()
 void Parser::E()  
 {
     T();
-    while ( c_type == LEX_EQ || c_type == LEX_LSS || c_type == LEX_GTR || c_type == LEX_LEQ || 
-            c_type == LEX_GEQ || c_type == LEX_NEQ || c_type == LEX_DEQ || 
-            c_type == LEX_OR || c_type == LEX_AND || c_type == LEX_NOT) 
+    while (c_type == LEX_OR || c_type == LEX_AND || c_type == LEX_NOT || c_type == LEX_EQ) 
     {
         st_lex.push(c_type);
         gl();
@@ -668,7 +666,9 @@ void Parser::E()
 void Parser::T() 
 {
     F();
-    while (c_type == LEX_PLUS || c_type == LEX_MINUS || c_type == LEX_TIMES || c_type == LEX_SLASH || c_type == LEX_PERCENT) 
+    while ( c_type == LEX_PLUS || c_type == LEX_MINUS || c_type == LEX_TIMES || c_type == LEX_SLASH || c_type == LEX_PERCENT ||
+            c_type == LEX_EQ || c_type == LEX_LSS || c_type == LEX_GTR || c_type == LEX_LEQ || 
+            c_type == LEX_GEQ || c_type == LEX_NEQ || c_type == LEX_DEQ ) 
     {
         st_lex.push(c_type);
         gl();
@@ -795,6 +795,7 @@ void Parser::check_id()
     if (TID[c_val].GetDeclare())
     {
         st_lex.push(TID[c_val].GetType());
+        // cout << TID[c_val].GetType() << endl;
     }
     else
     {
@@ -804,7 +805,7 @@ void Parser::check_id()
 
 void Parser::check_id_in_read()
 {
-    if (!TID [c_val].GetDeclare()) 
+    if (!TID[c_val].GetDeclare()) 
         throw "not declared";
 }
 
@@ -823,6 +824,12 @@ void Parser::check_op()
     
     if ( op == LEX_OR || op == LEX_AND)
         operation_type = LEX_BOOL;
+
+    if (t1 == LEX_STR_CONST) operation_type = LEX_STR_CONST;
+
+    //cout << t2 << endl;
+    //cout << t1 << endl;
+    //cout << operation_type << endl;
 
     if ((t1 == t2) && (t1 == operation_type))
     {
@@ -843,7 +850,7 @@ void Parser::eq_type(LexType& new_val)
 void Parser::eq_bool(LexType& new_val) 
 {
     from_st(st_lex, new_val);
-    cout << new_val << endl;
+    // cout << new_val << endl;
     if (new_val != LEX_BOOL)
         throw "expression is not boolean";
 }
