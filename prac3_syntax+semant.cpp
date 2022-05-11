@@ -16,7 +16,7 @@ const char * TW[] = {
     "return", "string",
     "true",
     "while", "write", "read",
-    "and", "or", "not",
+    "and", "or", "not", "goto",
     NULL 
 };
 
@@ -30,7 +30,7 @@ const char * TD[] = {
 };
 
 enum LexType {
-    // TW 0-17
+    // TW 0-18
     LEX_NULL,
     LEX_PROGRAM,
     LEX_UNDEFINED,                            
@@ -40,15 +40,15 @@ enum LexType {
     LEX_RETURN, LEX_STRING, 
     LEX_TRUE,
     LEX_WHILE, LEX_WRITE, LEX_READ,
-    LEX_AND, LEX_OR, LEX_NOT,
-    // TD 18-37                                                                                 
+    LEX_AND, LEX_OR, LEX_NOT, LEX_GOTO, 
+    // TD 19-38                                                                                 
     LEX_SEMICOLON, LEX_COMMA, LEX_COLON, LEX_DOT, LEX_LPAREN,
     LEX_RPAREN, LEX_BEGIN, LEX_END,             
     LEX_EQ, LEX_DEQ, LEX_LSS, LEX_GTR, LEX_PLUS,
     LEX_MINUS, LEX_TIMES, LEX_SLASH, LEX_PERCENT,
     LEX_LEQ, LEX_NEQ, LEX_GEQ,
-    // 38-40
-    LEX_ID,
+    // 39-42
+    LEX_ID, LEX_MARK,
     LEX_NUMB, LEX_STR_CONST                                                                                              
 };
 
@@ -63,24 +63,20 @@ class Ident
     string id_name;       
     LexType id_type;
     int id_value;   
-
-    bool assign;
     bool declare; 
 public:
 
-    Ident (string n) : id_name(n), assign(false), declare(false) {}
+    Ident (string n) : id_name(n), declare(false) {}
     bool operator==(const string& s) const { return id_name == s; }
 
     LexType GetType() const { return id_type; }
     int GetValue() const    { return id_value; }
     string GetName() const  { return id_name; }
-    bool GetAssign() const  { return assign; }
     bool GetDeclare() const { return declare; }
 
     void SetType(LexType t)  { id_type = t; }
     void SetValue(int v)     { id_value = v; }
     void SetName(string str) { id_name = str;}
-    void SetAssign()         { assign = true; }
     void SetDeclare()        { declare = true; }
 };
 
@@ -119,7 +115,7 @@ public:
 ostream& operator<< (ostream &out, Lex l)
 {
     string type, type_of_table;
-    if (l.l_type <= LEX_NOT)               
+    if (l.l_type <= LEX_GOTO)               
     {
         type = (string)TW[l.l_type];
         type_of_table = "TW: ";
@@ -153,7 +149,6 @@ ostream& operator<< (ostream &out, Lex l)
 class Scanner 
 {
     char c;
-    bool flag = true;
     char gc() 
     { 
         cin.read(&c, 1);
@@ -171,7 +166,7 @@ class Scanner
         return(0);
     }
 public:
-
+    static bool flag;
     Scanner() {}
     Scanner(const char* name)
     {
@@ -408,6 +403,8 @@ class Parser
     void E();
     void T();
     void F();
+    // работа с goto
+    void GT();
     // работа с read
     void RD();
     // работа с write
@@ -421,6 +418,8 @@ class Parser
     void check_id_in_read();
     // проверка соответствия типов операндов для двуместной операции
     void check_op();
+    // проверка not
+    void check_not();
     // проверка на равенство типов при операторе присваивания           
     void eq_type(LexType&);
     // проверка на то, что в условном операторе и операторе цикла находится логическое выражение
@@ -530,7 +529,11 @@ void Parser::S()
             {
                 throw curr_lex;
             }
-        } 
+        }
+        else if (c_type == LEX_COLON) 
+        {
+            gl();
+        }
         else
         {
             throw curr_lex;
@@ -546,6 +549,11 @@ void Parser::S()
         st_lex.push(LEX_NUMB);
         E();
         gl();
+    }
+    else if (c_type == LEX_GOTO)
+    {
+        gl();
+        GT();
     }
     else if (cin.eof()) 
     {
@@ -587,6 +595,27 @@ void Parser::B()
     else 
     {
         throw curr_lex;
+    }
+}
+
+void Parser::GT()
+{
+    if (c_type != LEX_ID) 
+    {
+        throw curr_lex;
+    } 
+    else 
+    {
+        dec(LEX_MARK, c_val);
+        gl();
+    }
+    if (c_type != LEX_SEMICOLON && (!cin.eof()))
+    {
+        throw curr_lex;
+    }
+    else if (c_type == LEX_SEMICOLON)
+    {
+        gl();
     }
 }
 
@@ -708,6 +737,7 @@ void Parser::F()
     {
         gl();
         F();
+        check_not();
     } 
     else if (c_type == LEX_LPAREN) 
     {
@@ -838,6 +868,18 @@ void Parser::check_op()
     else throw "wrong types in last operation";
 }
 
+void Parser::check_not()
+{
+    LexType t;
+    from_st(st_lex, t);
+    if (t == LEX_BOOL)
+    {
+        st_lex.push(LEX_BOOL);
+    }
+    else 
+        throw "wrong type is in not";
+}
+
 void Parser::eq_type(LexType& new_val)
 {
     from_st(st_lex, new_val);
@@ -868,6 +910,7 @@ public:
 };
 
 //==========================================================================================
+bool Scanner::flag = true; 
 
 int main(int argc, char** argv)
 {
