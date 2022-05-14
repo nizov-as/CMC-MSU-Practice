@@ -539,7 +539,7 @@ void Parser::S()
             throw curr_lex;
         }
     } 
-    else if (c_type == LEX_INT || c_type == LEX_STRING)
+    else if (c_type == LEX_INT || c_type == LEX_STRING || c_type == LEX_BOOL)
     {
         gl();
         D();
