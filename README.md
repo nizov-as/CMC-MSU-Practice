@@ -1,2 +1,2 @@
-# Practice
-Задание практикума 2 курс
+### Lomonosov Moscow State University
+
