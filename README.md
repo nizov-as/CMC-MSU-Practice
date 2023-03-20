@@ -2,3 +2,10 @@
 
 ### <p align="center"> Lomonosov Moscow State University</p>
 
+Проекты, реализованные в рамках учебной программы ВМК МГУ:
+
+Язык Python:
+
+Язык R:
+
+Языки C, C++:
