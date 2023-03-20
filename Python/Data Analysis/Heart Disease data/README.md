@@ -1,4 +1,4 @@
-### Анализ Kaggle-датасета "Personal Key Indicators of Heart Disease"
+### Анализ Kaggle-датасета "Personal Key Indicators of Heart Disease" на языке Python
 
 В рамках задания по анализу данных требовалось:  
 
