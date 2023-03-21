@@ -1,6 +1,6 @@
 ### Изучение языка SQL
 
-Сертификат с отличием об окончании [курса](https://stepik.org/course/63054/syllabus) "Интерактивный тренажер по SQL" на платформе Stepik.
+[Сертификат](https://github.com/nizov-as/CMC-MSU-Practice/blob/main/SQL/stepik-certificate.pdf) с отличием об окончании [курса](https://stepik.org/course/63054/syllabus) "Интерактивный тренажер по SQL" на платформе Stepik.
 
 Конспекты по [курсу](https://stepik.org/course/63054/syllabus) "Интерактивный тренажер по SQL" на платформе Stepik:
 
