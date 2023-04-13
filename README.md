@@ -19,5 +19,5 @@
 * Анализ Kaggle-датасета "Personal Key Indicators of Heart Disease" ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/R/Heart%20Disease%20data))
 
 **Языки C, C++:**
-* Язык С: Модельный Shell-интерпретатор ([Shell](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Shell))
-* Язык С++: Интерпретатор модельного языка программирования ([Interpretator](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Interpretator))
+* Язык С: Модельный Shell-интерпретатор ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Shell))
+* Язык С++: Интерпретатор модельного языка программирования ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Interpretator))
