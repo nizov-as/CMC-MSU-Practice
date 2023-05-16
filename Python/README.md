@@ -3,7 +3,7 @@
 * Анализ данных:
     + Pet-проект по кредитному скорингу: анализ Kaggle-датасета "Credit Card Approval Prediction" ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/Python/Data%20Analysis/Credit%20Approval%20data))
     + Учебный проект: анализ Kaggle-датасета "Personal Key Indicators of Heart Disease" ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/Python/Data%20Analysis/Heart%20Disease%20data))
-    + Проекты спецкурса "Анализ данных в индустрии" от Тинькофф ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/Python/Data%20Analysis/Спецкурс%20%22Анализ%20данных%20в%20индустрии%22)):
+    + Проекты спецкурса "Анализ данных в индустрии" от Тинькофф:
         - Проект "Воронка продаж для Тинькофф Квест" ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/Python/Data%20Analysis/Спецкурс%20%22Анализ%20данных%20в%20индустрии%22/Проект%20№1%20%22Тинькофф%20Квест%22))
         - Проект "A/B тестирование на процессах продажных обзвонов и оформления кредитных карт" ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/Python/Data%20Analysis/Спецкурс%20%22Анализ%20данных%20в%20индустрии%22/Проект%20№2%20%22AB-тестирование%22))
     
