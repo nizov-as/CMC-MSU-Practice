@@ -24,5 +24,3 @@
 **Языки C, C++:**
 * Язык С: Модельный Shell-интерпретатор ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Shell))
 * Язык С++: Интерпретатор модельного языка программирования ([ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/C%2C%20C%2B%2B/Interpretator))
-
-**Моё резюме:** [ссылка](https://github.com/nizov-as/CMC-MSU-Practice/tree/main/CV)
